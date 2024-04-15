@@ -41,4 +41,7 @@ public class Result {
         return this;
     }
 
+    public String getStatus() {
+        return message;
+    }
 }

@@ -1,3 +1,4 @@
+#需要修改配置
 server:
   port: 8080
 
@@ -12,6 +13,25 @@ spring:
     name: root
     password: ""
     username: root
+# Redis连接配置
+    redis:
+      database: 0
+      host: 127.0.0.1
+      port: 6379
+      timeout: 2000
+      lettuce:
+        pool:
+          max-active: 8
+          max-wait: -1
+          max-idle: 8
+          min-idle: 0
+
+
+
+# 限流配置
+redis:
+  limit: 5
+
 
 logging:
   level:

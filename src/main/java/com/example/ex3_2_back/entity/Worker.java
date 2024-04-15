@@ -12,10 +12,11 @@ import lombok.*;
 @NoArgsConstructor
 public class Worker {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    Integer id;
-    String name;
-    String email;
-    String phone;
-    String address;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private String password;
+    private String role;
+
+    // Getters and setters
 }

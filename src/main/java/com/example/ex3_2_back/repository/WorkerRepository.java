@@ -14,5 +14,8 @@ import java.util.Optional;
 @Tag(name = "获取工作人员")
 public interface WorkerRepository extends JpaRepository<Worker, Integer> {
 
+    Optional<Worker> findByName(String username);
+    boolean existsByNameAndPassword(String username, String password);
+    boolean existsByName(String username);
 
 }

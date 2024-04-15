@@ -5,8 +5,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.*;
-
-
 @Builder
 @Setter
 @Getter
@@ -32,4 +30,10 @@ public class User {
     String phone;
     @Schema(defaultValue = "北京市海淀区北京交通大学")
     String address;
+
+    public User(int i, String alice, String password123, String mail) {
+    }
+
+    public User(Integer o, String charlie, String password789, String mail) {
+    }
 }

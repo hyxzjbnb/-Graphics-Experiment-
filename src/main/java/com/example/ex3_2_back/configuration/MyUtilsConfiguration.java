@@ -10,4 +10,5 @@ public class MyUtilsConfiguration {
     public MyJwtUtil jwtUtil() {
         return new MyJwtUtil();
     }
+
 }
