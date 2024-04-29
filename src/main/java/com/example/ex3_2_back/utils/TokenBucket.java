@@ -4,8 +4,10 @@ package com.example.ex3_2_back.utils;
  * @author hyxzjbnb
  * @create 2024-04-29-21:40
  */
-import java.util.concurrent.atomic.AtomicInteger;
+import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.atomic.AtomicInteger;
+@Slf4j
 public class TokenBucket {
 
     private final int capacity; // 令牌桶容量

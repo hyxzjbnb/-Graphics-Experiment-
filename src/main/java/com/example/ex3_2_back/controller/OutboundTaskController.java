@@ -8,6 +8,7 @@ import com.example.ex3_2_back.entity.OutboundTask;
 import com.example.ex3_2_back.service.OutboundTaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -17,8 +18,9 @@ import com.example.ex3_2_back.domain.Result;
 import java.util.List;
 
 @RestController
+@Slf4j
 @RequestMapping("/outbound-tasks")
-@Tag(name = "OutboundTaskController", description = "出库任务管理接口")
+@Tag(name = "出库任务管理", description = "出库任务管理接口")
 public class OutboundTaskController {
 
     @Autowired

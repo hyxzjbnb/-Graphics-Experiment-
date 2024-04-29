@@ -6,6 +6,7 @@ package com.example.ex3_2_back.controller;
  */
 import com.example.ex3_2_back.service.InventoryService;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +20,8 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 @RestController
-@Tag(name = "InventoryController", description = "库存管理接口")
+@Slf4j
+@Tag(name = "库存管理", description = "库存管理接口")
 public class InventoryController implements ErrorController {
 
     @Autowired

@@ -5,6 +5,7 @@ import com.example.ex3_2_back.entity.OrderException;
 import com.example.ex3_2_back.service.OrderExceptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
@@ -12,8 +13,9 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 
 @RestController
+@Slf4j
 @RequestMapping("/order-exceptions")
-@Tag(name = "OrderExceptionController", description = "订单异常管理接口")
+@Tag(name = "订单异常管理", description = "订单异常管理接口")
 public class OrderExceptionController {
 
     @Autowired

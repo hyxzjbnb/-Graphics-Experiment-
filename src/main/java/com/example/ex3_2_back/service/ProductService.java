@@ -2,6 +2,7 @@ package com.example.ex3_2_back.service;
 
 import com.example.ex3_2_back.entity.*;
 import com.example.ex3_2_back.repository.ProductRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 public class ProductService {
 
     @Autowired

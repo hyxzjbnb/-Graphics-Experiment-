@@ -4,11 +4,15 @@ import com.example.ex3_2_back.entity.Product;
 import com.example.ex3_2_back.service.ProductService;
 import com.example.ex3_2_back.domain.Result;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@Slf4j
 @RequestMapping("/products")
+@Tag(name = "产品管理", description = "产品管理接口")
 public class ProductController {
 
     @Autowired

@@ -8,12 +8,14 @@ import com.example.ex3_2_back.entity.InboundTask;
 import com.example.ex3_2_back.service.InboundTaskService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import com.example.ex3_2_back.domain.Result;
 @RestController
 @RequestMapping("/inbound-tasks")
-@Tag(name = "InboundTaskController", description = "入库任务管理接口")
+@Slf4j
+@Tag(name = "入库任务管理", description = "入库任务管理接口")
 public class InboundTaskController {
 
     @Autowired

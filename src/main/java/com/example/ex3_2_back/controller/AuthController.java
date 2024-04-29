@@ -22,7 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/auth")
 @Slf4j
-@Tag(name = "AuthController",description = "AuthController")
+@Tag(name = "权限管理",description = "AuthController")
 public class AuthController {
 
     private AuthService authService;

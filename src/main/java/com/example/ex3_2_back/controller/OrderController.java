@@ -5,12 +5,14 @@ import com.example.ex3_2_back.entity.Order;
 import com.example.ex3_2_back.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@Slf4j
 @RequestMapping("/orders")
-@Tag(name = "OrderController", description = "订单管理接口")
+@Tag(name = "订单管理", description = "订单管理接口")
 public class OrderController {
 
     @Autowired

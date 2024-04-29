@@ -4,11 +4,15 @@ import com.example.ex3_2_back.entity.User;
 import com.example.ex3_2_back.domain.Result;
 import com.example.ex3_2_back.repository.UserRepository;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
+@Slf4j
 @RequestMapping("/user")
+@Tag(name = "用户管理", description = "用户管理接口")
 public class UserController {
     private UserRepository userRepository;
 

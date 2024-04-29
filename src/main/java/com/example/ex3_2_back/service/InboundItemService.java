@@ -6,6 +6,7 @@ import com.example.ex3_2_back.repository.InboundItemRepository;
 import com.example.ex3_2_back.repository.InboundTaskRepository;
 import com.example.ex3_2_back.entity.*;
 import com.example.ex3_2_back.repository.*;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,6 +18,7 @@ import java.time.LocalDate;
  * @create 2024-04-15-1:18
  */
 @Service
+@Slf4j
 public class InboundItemService {
 
     @Autowired
