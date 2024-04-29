@@ -1,8 +1,5 @@
 package com.example.ex3_2_back.configuration;
 
-
-
-
 import cn.hutool.core.util.RandomUtil;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;

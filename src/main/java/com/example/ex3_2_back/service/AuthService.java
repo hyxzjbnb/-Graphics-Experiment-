@@ -41,6 +41,7 @@ public class AuthService {
 
     @NotNull
     public Result login(@NotNull LoginDomain loginDomain, @NotNull HttpServletResponse response) {
+
         if (!userRepository.existsByNameAndPassword(loginDomain.getUsername(), loginDomain.getPassword())) {
             String message = String.format("wrong username %s or password %s", loginDomain.getUsername(), loginDomain.getPassword());
             log.info(message);

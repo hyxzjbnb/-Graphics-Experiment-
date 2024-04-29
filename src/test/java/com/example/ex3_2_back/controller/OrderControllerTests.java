@@ -1,6 +1,7 @@
 package com.example.ex3_2_back.controller;
 
 import com.example.ex3_2_back.entity.Order;
+import com.example.ex3_2_back.service.AdminAuthService;
 import com.example.ex3_2_back.service.AuthService;
 import com.example.ex3_2_back.service.OrderService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,6 +45,10 @@ public class OrderControllerTests {
 
     @MockBean
     private AuthService authService;
+
+    @MockBean
+    private AdminAuthService adminauthService;
+
 
     @BeforeEach
     void setUp() {

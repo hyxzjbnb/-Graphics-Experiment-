@@ -1,6 +1,7 @@
 package com.example.ex3_2_back.configuration;
 
 import com.example.ex3_2_back.interceptor.AuthInterceptor;
+import com.example.ex3_2_back.interceptor.RateLimitInterceptor;
 import com.example.ex3_2_back.interceptor.WorkerAuthInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,6 +21,18 @@ public class MyInterceptorConfiguration implements WebMvcConfigurer {
     public void setAuthInterceptor(AuthInterceptor authInterceptor) {
         this.authInterceptor = authInterceptor;
     }
+
+    RateLimitInterceptor rateLimitInterceptor;
+
+    @Autowired
+    public void setRateLimitInterceptor(RateLimitInterceptor rateLimitInterceptor) {
+        this.rateLimitInterceptor = rateLimitInterceptor;
+    }
+
+//    @Autowired
+//    public void setWorkerAuthInterceptor(WorkerAuthInterceptor workerAuthInterceptor) {
+//        this.workerAuthInterceptor = workerAuthInterceptor;
+//    }
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -42,6 +55,10 @@ public class MyInterceptorConfiguration implements WebMvcConfigurer {
 
 //        registry.addInterceptor(workerAuthInterceptor)
 //                .addPathPatterns("/api/protected/**"); // Only intercept requests to "/api/protected/**"
+
+        registry.addInterceptor(rateLimitInterceptor)
+                .addPathPatterns("/**"); // 在此添加需要进行速率限制的请求路径
     }
+
 
 }

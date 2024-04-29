@@ -52,5 +52,11 @@ public class InventoryService {
             inventoryRepository.save(inventory);
         }
     }
+
+    public int getInventoryQuantity(Integer productId) {
+        Inventory inventory = inventoryRepository.findByProduct_ProductId(productId)
+                .orElseThrow(() -> new RuntimeException("Inventory not found for Product ID: " + productId));
+        return inventory.getQuantity();
+    }
 }
 

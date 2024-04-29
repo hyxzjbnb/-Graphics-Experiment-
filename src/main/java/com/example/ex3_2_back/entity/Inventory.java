@@ -27,4 +27,11 @@ public class Inventory {
 
     @Column(nullable = false)
     private LocalDateTime lastUpdated;
+
+    public void setId(int i) {
+        this.inventoryId = i;
+    }
+
+    public void setProductId(int i) {
+    }
 }

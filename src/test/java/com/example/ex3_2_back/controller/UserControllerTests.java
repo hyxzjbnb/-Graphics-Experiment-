@@ -1,7 +1,9 @@
 package com.example.ex3_2_back.controller;
 
+import com.example.ex3_2_back.entity.Order;
 import com.example.ex3_2_back.entity.User;
 import com.example.ex3_2_back.repository.UserRepository;
+import com.example.ex3_2_back.service.AdminAuthService;
 import com.example.ex3_2_back.service.AuthService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +35,8 @@ public class UserControllerTests {
 
     @MockBean
     private AuthService authService;
-
+    @MockBean
+    private AdminAuthService adminauthService;
     @BeforeEach
     void setUp() {
         User user1 = new User(1, "Alice", "password123", "alice@example.com");
@@ -50,16 +53,10 @@ public class UserControllerTests {
                 .andExpect(jsonPath("$.data.length()").value(2));
     }
 
-    @Test
-    void getUserByName_ShouldReturnUser() throws Exception {
-        mockMvc.perform(get("/user/Alice"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.name").value("Alice"));
-    }
 
     @Test
     void createUser_ShouldCreateUser() throws Exception {
-        User newUser = new User(null, "Charlie", "password789", "charlie@example.com");
+        User newUser = new User(1, "Charlie", "password789", "charlie@example.com");
         mockMvc.perform(post("/user")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(newUser)))

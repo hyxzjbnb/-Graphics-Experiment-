@@ -30,4 +30,7 @@ public class OutboundTask {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    public void setId(int i) {
+    }
 }

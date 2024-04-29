@@ -31,9 +31,11 @@ public class User {
     @Schema(defaultValue = "北京市海淀区北京交通大学")
     String address;
 
-    public User(int i, String alice, String password123, String mail) {
+    public User(int i, String name, String password, String mail) {
+        this.id = i;
+        this.name = name;
+        this.password = password;
+        this.email = mail;
     }
 
-    public User(Integer o, String charlie, String password789, String mail) {
-    }
 }

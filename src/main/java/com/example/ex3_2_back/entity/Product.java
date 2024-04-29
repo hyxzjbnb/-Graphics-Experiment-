@@ -35,6 +35,7 @@ public class Product {
     }
 
     public void setId(Integer productId) {
+        this.productId = productId;
     }
 
     // 可以根据需要添加其他字段

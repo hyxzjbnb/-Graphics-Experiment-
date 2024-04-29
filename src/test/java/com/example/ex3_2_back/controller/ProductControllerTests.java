@@ -1,6 +1,7 @@
 package com.example.ex3_2_back.controller;
 
 import com.example.ex3_2_back.entity.Product;
+import com.example.ex3_2_back.service.AdminAuthService;
 import com.example.ex3_2_back.service.AuthService;
 import com.example.ex3_2_back.service.ProductService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,6 +40,9 @@ class ProductControllerTests {
 
     @MockBean
     private AuthService authService;
+
+    @MockBean
+    private AdminAuthService adminauthService;
 
     @Test
     void testAddProduct() throws Exception {

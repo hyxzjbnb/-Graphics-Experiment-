@@ -26,4 +26,9 @@ public class InboundTask {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    public void setId(Integer id) {
+
+    }
+
 }

@@ -5,10 +5,17 @@ import com.example.ex3_2_back.repository.OutboundTaskRepository;
 import com.example.ex3_2_back.entity.*;
 import com.example.ex3_2_back.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import com.example.ex3_2_back.specifications.OutPostSpecifications;
 import com.example.ex3_2_back.entity.*;
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.concurrent.*;
+import com.example.ex3_2_back.domain.Result;
 /**
  * @author hyxzjbnb
  * @create 2024-04-15-1:19
@@ -53,5 +60,34 @@ public class OutboundTaskService {
         } else {
             throw new IllegalStateException("Cannot cancel a completed task.");
         }
+    }
+
+    @Transactional(readOnly = true)
+    public Result searchOutPosts(String status, String startDate, String endDate, Pageable pageable) {
+        Callable<Result> task = () -> {
+            try {
+                Specification<OutboundTask> spec = Specification.where(null);
+
+                if (status != null && !status.isEmpty()) {
+                    spec = spec.and(OutPostSpecifications.hasStatus(status));
+                }
+                if (startDate != null && !startDate.isEmpty()) {
+                    spec = spec.and(OutPostSpecifications.hasStartDate(LocalDateTime.parse(startDate)));
+                }
+                if (endDate != null && !endDate.isEmpty()) {
+                    spec = spec.and(OutPostSpecifications.hasEndDate(LocalDateTime.parse(endDate)));
+                }
+
+                Page<OutboundTask> outboundTasks = outboundTaskRepository.findAll(spec, pageable);
+                if (outboundTasks.hasContent()) {
+                    return Result.success(outboundTasks);
+                } else {
+                    return Result.error("没有查到相关资料");
+                }
+            } catch (Exception e) {
+                return Result.error("失败：" + e.getMessage());
+            }
+        };
+        return null;
     }
 }

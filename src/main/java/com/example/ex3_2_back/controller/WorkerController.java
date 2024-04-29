@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/worker")
 public class WorkerController {
     WorkerRepository workerRepository;
-
     @Autowired
     @Operation(summary = "setWorkerRepository", description = "setWorkerRepository")
     public void setWorkerRepository(WorkerRepository workerRepository) {
