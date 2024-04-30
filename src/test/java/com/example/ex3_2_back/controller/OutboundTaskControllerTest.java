@@ -7,6 +7,7 @@ package com.example.ex3_2_back.controller;
 import com.example.ex3_2_back.controller.OutboundTaskController;
 import com.example.ex3_2_back.entity.OutboundTask;
 import com.example.ex3_2_back.domain.Result;
+import com.example.ex3_2_back.interceptor.RateLimitInterceptor;
 import com.example.ex3_2_back.service.AdminAuthService;
 import com.example.ex3_2_back.service.AuthService;
 import com.example.ex3_2_back.service.OutboundTaskService;
@@ -52,6 +53,9 @@ public class OutboundTaskControllerTest {
 
     @MockBean
     private AdminAuthService adminauthService;
+
+    @MockBean
+    private RateLimitInterceptor rateLimitInterceptor;
 
     @BeforeEach
     void setUp() {

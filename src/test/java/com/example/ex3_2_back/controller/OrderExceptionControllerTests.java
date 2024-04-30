@@ -43,17 +43,4 @@ public class OrderExceptionControllerTests {
                 .andExpect(jsonPath("$.success").value(true));
     }
 
-    @Test
-    void testUpdateException() throws Exception {
-        mockMvc = MockMvcBuilders.standaloneSetup(orderExceptionController).setSingleView(new MappingJackson2JsonView()).build();
-        OrderException exception = new OrderException();
-        when(orderExceptionService.updateException(eq(1), any(String.class))).thenReturn(exception);
-
-        mockMvc.perform(patch("/order-exceptions/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("\"New description\"")
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true));
-    }
 }

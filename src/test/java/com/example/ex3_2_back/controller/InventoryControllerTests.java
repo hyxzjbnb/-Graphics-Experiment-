@@ -2,6 +2,7 @@ package com.example.ex3_2_back.controller;
 
 import com.example.ex3_2_back.entity.Inventory;
 import com.example.ex3_2_back.entity.Product;
+import com.example.ex3_2_back.interceptor.RateLimitInterceptor;
 import com.example.ex3_2_back.service.AdminAuthService;
 import com.example.ex3_2_back.service.AuthService;
 import com.example.ex3_2_back.service.InventoryService;
@@ -45,6 +46,10 @@ public class InventoryControllerTests {
 
     @MockBean
     private AdminAuthService adminauthService;
+
+
+    @MockBean
+    private RateLimitInterceptor rateLimitInterceptor;
     @BeforeEach
     void setUp() {
         // 创建一个产品对象

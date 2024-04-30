@@ -15,7 +15,7 @@ public class MyUtilsConfiguration {
     @Bean
     public TokenBucket tokenBucket() {
         // 在此可以根据需要指定令牌桶的容量
-        return new TokenBucket(100); // 假设令牌桶容量为 100
+        return new TokenBucket(1); // 假设令牌桶容量为 100
     }
 
 }

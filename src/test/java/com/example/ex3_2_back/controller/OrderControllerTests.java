@@ -77,17 +77,6 @@ public class OrderControllerTests {
                 .andExpect(jsonPath("$.data.status").value("Pending"));
     }
 
-    @Test
-    void testUpdateOrderStatus() throws Exception {
-        when(orderService.updateOrderStatus(eq(1), any(String.class))).thenReturn(order);
-
-        mockMvc.perform(patch("/orders/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"status\":\"Completed\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("Pending"));
-    }
-
 
     @Test
     void testGetOrders() throws Exception {

@@ -2,6 +2,7 @@ package com.example.ex3_2_back.controller;
 
 import com.example.ex3_2_back.entity.Order;
 import com.example.ex3_2_back.entity.User;
+import com.example.ex3_2_back.interceptor.RateLimitInterceptor;
 import com.example.ex3_2_back.repository.UserRepository;
 import com.example.ex3_2_back.service.AdminAuthService;
 import com.example.ex3_2_back.service.AuthService;
@@ -37,6 +38,9 @@ public class UserControllerTests {
     private AuthService authService;
     @MockBean
     private AdminAuthService adminauthService;
+
+    @MockBean
+    private RateLimitInterceptor rateLimitInterceptor;
     @BeforeEach
     void setUp() {
         User user1 = new User(1, "Alice", "password123", "alice@example.com");

@@ -63,7 +63,7 @@ public class OutboundTaskService {
             throw new IllegalStateException("Cannot cancel a completed task.");
         }
     }
-
+    private final ExecutorService executor = Executors.newCachedThreadPool();
     @Transactional(readOnly = true)
     public Result searchOutPosts(String status, String startDate, String endDate, Pageable pageable) {
         Callable<Result> task = () -> {
@@ -90,6 +90,14 @@ public class OutboundTaskService {
                 return Result.error("失败：" + e.getMessage());
             }
         };
-        return null;
+        Future<Result> future = executor.submit(task);
+        try {
+            return future.get(10, TimeUnit.SECONDS);
+        } catch (TimeoutException e) {
+            future.cancel(true);
+            return Result.error("操作超时，已取消恢复操作");
+        } catch (InterruptedException | ExecutionException e) {
+            return Result.error("恢复操作中断或执行失败：" + e.getMessage());
+        }
     }
 }

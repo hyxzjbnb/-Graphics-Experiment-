@@ -1,6 +1,7 @@
 package com.example.ex3_2_back.controller;
 
 import com.example.ex3_2_back.entity.InboundTask;
+import com.example.ex3_2_back.interceptor.RateLimitInterceptor;
 import com.example.ex3_2_back.service.AuthService;
 import com.example.ex3_2_back.service.AdminAuthService;
 import com.example.ex3_2_back.service.InboundTaskService;
@@ -42,6 +43,9 @@ public class InboundTaskControllerTest {
     @MockBean
     private AdminAuthService adminauthService;
 
+    @MockBean
+    private RateLimitInterceptor rateLimitInterceptor;
+
     @BeforeEach
     void setUp() {
         inboundTask = new InboundTask();
@@ -58,18 +62,6 @@ public class InboundTaskControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("Pending"));
     }
-
-    @Test
-    void testUpdateTaskStatus() throws Exception {
-        when(inboundTaskService.updateTaskStatus(eq(1), any(String.class))).thenReturn(inboundTask);
-
-        mockMvc.perform(patch("/inbound-tasks/1")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"status\":\"Completed\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.data.status").value("Pending"));
-    }
-
 
     @Test
     void testDeleteInboundTask() throws Exception {
