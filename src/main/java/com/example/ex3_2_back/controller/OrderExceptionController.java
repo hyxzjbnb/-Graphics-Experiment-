@@ -34,7 +34,7 @@ public class OrderExceptionController {
 
     @PatchMapping("/{exceptionId}")
     @Operation(summary = "更新异常记录", description = "更新异常描述或状态。")
-    public Result updateException(@PathVariable Integer exceptionId, @RequestBody String newDescription) {
+    public Result updateException(@PathVariable Integer exceptionId, @RequestParam String newDescription) {
         try {
             OrderException updatedException = orderExceptionService.updateException(exceptionId, newDescription);
             return Result.success(updatedException);
