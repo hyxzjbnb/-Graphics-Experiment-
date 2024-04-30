@@ -31,7 +31,7 @@ public class OrderController {
 
     @PatchMapping("/{orderId}")
     @Operation(summary = "更新订单状态", description = "更新订单的状态。")
-    public Result updateOrderStatus(@PathVariable Integer orderId, @RequestBody String status) {
+    public Result updateOrderStatus(@PathVariable Integer orderId, @RequestParam String status) {
         try {
             Order updatedOrder = orderService.updateOrderStatus(orderId, status);
             return Result.success(updatedOrder);

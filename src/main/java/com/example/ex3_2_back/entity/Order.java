@@ -32,5 +32,6 @@ public class Order {
     private LocalDateTime updatedAt;
 
     public void setId(int i) {
+        this.orderId = i;
     }
 }

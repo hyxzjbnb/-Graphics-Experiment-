@@ -56,8 +56,8 @@ public class MyInterceptorConfiguration implements WebMvcConfigurer {
 //        registry.addInterceptor(workerAuthInterceptor)
 //                .addPathPatterns("/api/protected/**"); // Only intercept requests to "/api/protected/**"
 
-        registry.addInterceptor(rateLimitInterceptor)
-                .addPathPatterns("/**"); // 在此添加需要进行速率限制的请求路径
+//        registry.addInterceptor(rateLimitInterceptor)
+//                .addPathPatterns("/**"); // 在此添加需要进行速率限制的请求路径
     }
 
 

@@ -34,7 +34,7 @@ public class InboundTaskController {
 
     @PatchMapping("/{taskId}")
     @Operation(summary = "更新入库任务状态", description = "更新入库任务的状态。")
-    public Result updateTaskStatus(@PathVariable Integer taskId, @RequestBody String status) {
+    public Result updateTaskStatus(@PathVariable Integer taskId, @RequestParam String status) {
         try {
             InboundTask updatedTask = inboundTaskService.updateTaskStatus(taskId, status);
             return Result.success(updatedTask);

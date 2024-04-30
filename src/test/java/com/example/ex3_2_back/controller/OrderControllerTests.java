@@ -1,6 +1,8 @@
 package com.example.ex3_2_back.controller;
 
 import com.example.ex3_2_back.entity.Order;
+import com.example.ex3_2_back.entity.User;
+import com.example.ex3_2_back.interceptor.RateLimitInterceptor;
 import com.example.ex3_2_back.service.AdminAuthService;
 import com.example.ex3_2_back.service.AuthService;
 import com.example.ex3_2_back.service.OrderService;
@@ -50,10 +52,15 @@ public class OrderControllerTests {
     private AdminAuthService adminauthService;
 
 
+    @MockBean
+    private RateLimitInterceptor rateLimitInterceptor;
+
     @BeforeEach
     void setUp() {
+        User user1 = new User(1, "Alice", "password123", "alice@example.com");
         order = new Order();
         order.setId(1);
+        order.setCustomer(user1);
         order.setStatus("Pending");
         order.setCreatedAt(LocalDateTime.now());
         order.setUpdatedAt(LocalDateTime.now());
