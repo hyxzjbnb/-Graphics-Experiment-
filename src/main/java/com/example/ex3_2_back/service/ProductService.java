@@ -17,12 +17,25 @@ public class ProductService {
     @Autowired
     private ProductRepository productRepository;
 
+
+    /**
+     * Saves a new product to the database and caches the result.
+     * @param product The product to save.
+     * @return The saved product.
+     */
+    @CachePut(value = "products", key = "#product.productId")
+    @Transactional
+    public Product saveProduct(Product product) {
+        Product savedProduct = productRepository.save(product);
+        return savedProduct;
+    }
+
     /**
      * Retrieves a product by its id, caching the result.
      * @param productId The id of the product to retrieve.
      * @return The requested product.
      */
-    @Cacheable(value = "products", key = "#productId")
+    @Cacheable(value = "products", key = "#product.productId")
     public Product getProductById(Integer productId) {
         return productRepository.findById(productId).orElseThrow(() -> new IllegalArgumentException("Product not found with ID: " + productId));
     }
@@ -32,7 +45,7 @@ public class ProductService {
      * @param product The product to update.
      * @return The updated product.
      */
-    @CachePut(value = "products", key = "#product.id")
+    @CachePut(value = "products", key = "#product.productId")
     @Transactional
     public Product updateProduct(Product product) {
         Product updatedProduct = productRepository.save(product);
@@ -43,7 +56,7 @@ public class ProductService {
      * Evicts a specific product from the cache.
      * @param productId The id of the product to evict from the cache.
      */
-    @CacheEvict(value = "products", key = "#productId")
+    @CacheEvict(value = "products", key = "#product.productId")
     public void evictProductFromCache(Long productId) {
         // This method will automatically remove the item from cache.
     }
@@ -52,7 +65,7 @@ public class ProductService {
      * Deletes a product and its cache.
      * @param productId The id of the product to delete.
      */
-    @CacheEvict(value = "products", key = "#productId")
+    @CacheEvict(value = "products", key = "#product.productId")
     @Transactional
     public void deleteProduct(Integer productId) {
         productRepository.deleteById(productId);

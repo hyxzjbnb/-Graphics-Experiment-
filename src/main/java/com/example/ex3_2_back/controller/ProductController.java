@@ -22,7 +22,7 @@ public class ProductController {
     @Operation(summary = "添加产品信息", description = "添加新的产品信息到数据库，包括名称、描述和初始库存量。")
     public Result addProduct(@RequestBody Product product) {
         try {
-            Product savedProduct = productService.updateProduct(product);
+            Product savedProduct = productService.saveProduct(product);
             return Result.success(savedProduct);
         } catch (Exception e) {
             return Result.error(e.getMessage()).addErrors(e);
