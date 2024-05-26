@@ -1,0 +1,16 @@
+spring:
+  r2dbc:
+    username: root
+    password: ""
+    url: r2dbcs:mysql://localhost:3306/warehouse_test_2?serverZoneId=Asia/Shanghai
+  redis:
+    host: "localhost"
+    port: 6379
+    client-name: ${spring.application.name}
+    client-type: lettuce #provide reactive connection
+    date_format: "dd-MM-yyyy"
+    time_format: "HH:mm:ss"
+
+jwt:
+  expiration:
+    duration: 3600
