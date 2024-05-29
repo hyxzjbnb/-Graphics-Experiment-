@@ -2,6 +2,7 @@ package com.hyx.webflux.javaee.controller;
 
 import com.hyx.webflux.javaee.domain.Result;
 import com.hyx.webflux.javaee.domain.auth.ProductDemo;
+import com.hyx.webflux.javaee.domain.auth.ProductDemo1;
 import com.hyx.webflux.javaee.model.HttpResult;
 import com.hyx.webflux.javaee.model.Product;
 import com.hyx.webflux.javaee.service.ProductCaching;
@@ -56,6 +57,30 @@ public class ProductController {
                 });
     }
 
+    @PatchMapping("caching")
+    //@Operation(summary = "添加产品信息", description = "添加新的产品信息到数据库，包括名称、描述和初始库存量。")
+    public Mono<HttpResult> updateProductcaching(@RequestBody ProductDemo demo) {
+        Product product = new Product();
+        product.setName(demo.getName());
+        product.setDescription(demo.getDescription());
+        product.setPrice(demo.getPrice());
+        product.setDate(LocalDate.now());
+        log.info("{}",product);
+        return Mono.just(product)
+                .flatMap(productCaching::updateProduct)  // 使用flatMap来处理异步的保存操作
+                .map(it -> new HttpResult(HttpStatus.OK.value(), "成功", null))  // 成功注册
+                .onErrorResume(e -> {
+                    // 日志记录错误
+                    log.error("失败", e);
+                    // 根据不同的错误类型返回不同的HTTP状态码
+                    if (e instanceof Exception) {
+                        return Mono.just(new HttpResult(HttpStatus.BAD_REQUEST.value(), "请求错误: " + e.getMessage(), null));
+                    } else {
+                        return Mono.just(new HttpResult(HttpStatus.INTERNAL_SERVER_ERROR.value(), "内部服务器错误: " + e.getMessage(), null));
+                    }
+                });
+    }
+//报存到缓存
     @PostMapping("caching")
     //@Operation(summary = "添加产品信息", description = "添加新的产品信息到数据库，包括名称、描述和初始库存量。")
     public Mono<HttpResult> addProductcaching(@RequestBody ProductDemo demo) {
@@ -64,9 +89,68 @@ public class ProductController {
         product.setDescription(demo.getDescription());
         product.setPrice(demo.getPrice());
         product.setDate(LocalDate.now());
-        log.info("{}",product);
         return Mono.just(product)
                 .flatMap(productCaching::saveProduct)  // 使用flatMap来处理异步的保存操作
+                .map(it -> new HttpResult(HttpStatus.OK.value(), "成功", null))  // 成功注册
+                .onErrorResume(e -> {
+                    // 日志记录错误
+                    log.error("失败", e);
+                    // 根据不同的错误类型返回不同的HTTP状态码
+                    if (e instanceof Exception) {
+                        return Mono.just(new HttpResult(HttpStatus.BAD_REQUEST.value(), "请求错误: " + e.getMessage(), null));
+                    } else {
+                        return Mono.just(new HttpResult(HttpStatus.INTERNAL_SERVER_ERROR.value(), "内部服务器错误: " + e.getMessage(), null));
+                    }
+                });
+    }
+//删除缓存里的数据
+    @DeleteMapping("caching")
+    //@Operation(summary = "添加产品信息", description = "添加新的产品信息到数据库，包括名称、描述和初始库存量。")
+    public Mono<HttpResult> DeleteProductcaching(@RequestBody ProductDemo1 demo) {
+        Product product = new Product();
+        product.setName(demo.getName());
+        product.setId(demo.getId());
+        product.setDate(LocalDate.now());
+        log.info("{}",product);
+        productCaching.deleteProductById2(product);
+        return Mono.just(new HttpResult(HttpStatus.OK.value(), "成功", null));
+    }
+
+    //删除缓存里的数据和数据库里的数据
+    @DeleteMapping
+    //@Operation(summary = "添加产品信息", description = "添加新的产品信息到数据库，包括名称、描述和初始库存量。")
+    public Mono<HttpResult> DeleteProduct(@RequestBody ProductDemo1 demo) {
+        Product product = new Product();
+        product.setName(demo.getName());
+        product.setId(demo.getId());
+        product.setDate(LocalDate.now());
+        log.info("{}",product);
+        return Mono.just(product)
+                .flatMap(productCaching::deleteProductById)  // 使用flatMap来处理异步的保存操作
+                .map(it -> new HttpResult(HttpStatus.OK.value(), "成功", null))  // 成功注册
+                .onErrorResume(e -> {
+                    // 日志记录错误
+                    log.error("失败", e);
+                    // 根据不同的错误类型返回不同的HTTP状态码
+                    if (e instanceof Exception) {
+                        return Mono.just(new HttpResult(HttpStatus.BAD_REQUEST.value(), "请求错误: " + e.getMessage(), null));
+                    } else {
+                        return Mono.just(new HttpResult(HttpStatus.INTERNAL_SERVER_ERROR.value(), "内部服务器错误: " + e.getMessage(), null));
+                    }
+                });
+    }
+
+//获得缓存里的数据，缓存查不到再到数据库里查找
+    @GetMapping("caching")
+    //@Operation(summary = "添加产品信息", description = "添加新的产品信息到数据库，包括名称、描述和初始库存量。")
+    public Mono<HttpResult> getProductcaching(@RequestBody ProductDemo1 demo) {
+        Product product = new Product();
+        product.setName(demo.getName());
+        product.setId(demo.getId());
+        product.setDate(LocalDate.now());
+        log.info("{}",product);
+        return Mono.just(product)
+                .flatMap(productCaching::getProductById)  // 使用flatMap来处理异步的保存操作
                 .map(it -> new HttpResult(HttpStatus.OK.value(), "成功", null))  // 成功注册
                 .onErrorResume(e -> {
                     // 日志记录错误

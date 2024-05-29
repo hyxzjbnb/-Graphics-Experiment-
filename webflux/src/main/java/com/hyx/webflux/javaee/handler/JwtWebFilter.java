@@ -40,6 +40,8 @@ public class JwtWebFilter implements WebFilter {
         IGNORE_PATHS.add("/auth/login");
         IGNORE_PATHS.add("/auth/signout");
         IGNORE_PATHS.add("/auth/signup");
+        IGNORE_PATHS.add("/orders");
+        IGNORE_PATHS.add("/orders/");
     }
 
     protected Mono<Void> writeErrorMessage(ServerHttpResponse response, HttpStatus status, String msg) throws JsonProcessingException, UnsupportedEncodingException {
@@ -57,24 +59,24 @@ public class JwtWebFilter implements WebFilter {
         ServerHttpResponse response = exchange.getResponse();
 
         String path = request.getPath().value();
-        // Check if the path is one of the ignored paths
-        if (IGNORE_PATHS.stream().anyMatch(path::contains)) {
-            return chain.filter(exchange);
-        }
-        String auth = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (auth == null) {
-            return this.writeErrorMessage(response, HttpStatus.NOT_ACCEPTABLE, "没有携带token");
-        }
-        else if (!auth.startsWith(jwtSigner.getTokenPrefix())) {
-            return this.writeErrorMessage(response, HttpStatus.NOT_ACCEPTABLE, "token 没有以" + jwtSigner.getTokenPrefix() + "开始");
-        }
-
-        String token = auth.replace(jwtSigner.getTokenPrefix(),"");
-        try {
-            exchange.getAttributes().put("token", token);
-        } catch (Exception e) {
-            return this.writeErrorMessage(response, HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
+//        // Check if the path is one of the ignored paths
+//        if (IGNORE_PATHS.stream().anyMatch(path::contains)) {
+//            return chain.filter(exchange);
+//        }
+//        String auth = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+//        if (auth == null) {
+//            return this.writeErrorMessage(response, HttpStatus.NOT_ACCEPTABLE, "没有携带token");
+//        }
+//        else if (!auth.startsWith(jwtSigner.getTokenPrefix())) {
+//            return this.writeErrorMessage(response, HttpStatus.NOT_ACCEPTABLE, "token 没有以" + jwtSigner.getTokenPrefix() + "开始");
+//        }
+//
+//        String token = auth.replace(jwtSigner.getTokenPrefix(),"");
+//        try {
+//            exchange.getAttributes().put("token", token);
+//        } catch (Exception e) {
+//            return this.writeErrorMessage(response, HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+//        }
 
         return chain.filter(exchange);
     }
