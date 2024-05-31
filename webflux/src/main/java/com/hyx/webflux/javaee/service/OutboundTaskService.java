@@ -30,7 +30,7 @@ public class OutboundTaskService {
                 .switchIfEmpty(Mono.error(new RuntimeException("Order not found")))
                 .flatMap(order -> {
                     OutboundTask task = new OutboundTask();
-                    task.setOrder(order);
+                    task.setOrder_id(orderId);
                     task.setStatus("Pending");
                     task.setCreatedAt(LocalDateTime.now());
                     task.setUpdatedAt(LocalDateTime.now());
