@@ -13,5 +13,5 @@ import java.util.Optional;
  * @create 2024-05-29-16:28
  */
 public interface InventoryRepository extends ReactiveCrudRepository<Inventory, Integer> {
-//    Flux<Inventory> findInventoriesBy(Integer productId);
+    Flux<Inventory> findByPid(Integer productId);
 }

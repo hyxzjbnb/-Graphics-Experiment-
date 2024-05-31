@@ -9,10 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import com.hyx.webflux.javaee.model.OrderItem;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 
 /**
@@ -49,4 +46,31 @@ public class OrderItemController {
                     }
                 });
     }
+    //更新
+    @PatchMapping("/{orderItemId}")
+    @Operation(summary = "更新订单商品", description = "更新订单中某个商品的数量。")
+    public Mono<HttpResult> updateOrderItem(@PathVariable Integer orderItemId, @RequestParam Integer newQuantity) {
+        return orderItemService.updateOrderItem(orderItemId, newQuantity)
+                .map(updatedOrderItem -> HttpResult.success("更新成功", updatedOrderItem))
+                .onErrorResume(e -> Mono.just(HttpResult.error("更新失败: " + e.getMessage(), e)));
+    }
+
+    @DeleteMapping("/{orderItemId}")
+    @Operation(summary = "删除订单商品", description = "从订单中删除一个商品，并更新库存。")
+    public Mono<HttpResult> removeOrderItem(@PathVariable Integer orderItemId) {
+        return orderItemService.removeOrderItem(orderItemId)
+                .then(Mono.just(HttpResult.success("删除成功", null)))
+                .onErrorResume(e -> Mono.just(HttpResult.error("删除失败: " + e.getMessage(), e)));
+    }
+    //删除
+
+    @GetMapping("/{orderItemId}")
+    @Operation(summary = "获取订单商品信息", description = "获取订单中某个商品的信息。")
+    public Mono<HttpResult> getOrderItem(@PathVariable Integer orderItemId) {
+        return orderItemService.getOrderItem(orderItemId)
+                .map(orderItem -> HttpResult.success("查询成功", orderItem))
+                .onErrorResume(e -> Mono.just(HttpResult.error("查询失败: " + e.getMessage(), e)));
+    }
+
+
 }

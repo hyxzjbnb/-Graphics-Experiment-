@@ -22,7 +22,7 @@ public class OutboundTask {
     @Id
     private Integer outboundTaskId;
 
-    private Order order;
+    private Integer order_id;
 
     private String status;
 
