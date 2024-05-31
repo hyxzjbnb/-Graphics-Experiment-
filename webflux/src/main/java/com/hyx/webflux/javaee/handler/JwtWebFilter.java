@@ -40,8 +40,6 @@ public class JwtWebFilter implements WebFilter {
         IGNORE_PATHS.add("/auth/login");
         IGNORE_PATHS.add("/auth/signout");
         IGNORE_PATHS.add("/auth/signup");
-        IGNORE_PATHS.add("/orders");
-        IGNORE_PATHS.add("/orders/");
     }
 
     protected Mono<Void> writeErrorMessage(ServerHttpResponse response, HttpStatus status, String msg) throws JsonProcessingException, UnsupportedEncodingException {
@@ -59,7 +57,7 @@ public class JwtWebFilter implements WebFilter {
         ServerHttpResponse response = exchange.getResponse();
 
         String path = request.getPath().value();
-//        // Check if the path is one of the ignored paths
+        // Check if the path is one of the ignored paths
 //        if (IGNORE_PATHS.stream().anyMatch(path::contains)) {
 //            return chain.filter(exchange);
 //        }

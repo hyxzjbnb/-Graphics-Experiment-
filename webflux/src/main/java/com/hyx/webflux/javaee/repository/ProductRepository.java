@@ -15,4 +15,6 @@ import java.util.Optional;
 public interface ProductRepository extends ReactiveCrudRepository<Product, Long> {
     @Operation(summary = "通过产品名查找")
     Mono<Product> findById(int id);
+
+    Mono<Product> findByName(String name);
 }

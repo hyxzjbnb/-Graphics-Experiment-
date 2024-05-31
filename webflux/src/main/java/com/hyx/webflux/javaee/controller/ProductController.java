@@ -112,7 +112,7 @@ public class ProductController {
         product.setId(demo.getId());
         product.setDate(LocalDate.now());
         log.info("{}",product);
-        productCaching.deleteProductById2(product);
+        productCaching.deleteProductById(product);
         return Mono.just(new HttpResult(HttpStatus.OK.value(), "成功", null));
     }
 
@@ -125,19 +125,8 @@ public class ProductController {
         product.setId(demo.getId());
         product.setDate(LocalDate.now());
         log.info("{}",product);
-        return Mono.just(product)
-                .flatMap(productCaching::deleteProductById)  // 使用flatMap来处理异步的保存操作
-                .map(it -> new HttpResult(HttpStatus.OK.value(), "成功", null))  // 成功注册
-                .onErrorResume(e -> {
-                    // 日志记录错误
-                    log.error("失败", e);
-                    // 根据不同的错误类型返回不同的HTTP状态码
-                    if (e instanceof Exception) {
-                        return Mono.just(new HttpResult(HttpStatus.BAD_REQUEST.value(), "请求错误: " + e.getMessage(), null));
-                    } else {
-                        return Mono.just(new HttpResult(HttpStatus.INTERNAL_SERVER_ERROR.value(), "内部服务器错误: " + e.getMessage(), null));
-                    }
-                });
+        productCaching.deleteProductById2(product);
+        return Mono.just(new HttpResult(HttpStatus.OK.value(), "成功", null));
     }
 
 //获得缓存里的数据，缓存查不到再到数据库里查找
@@ -151,7 +140,7 @@ public class ProductController {
         log.info("{}",product);
         return Mono.just(product)
                 .flatMap(productCaching::getProductById)  // 使用flatMap来处理异步的保存操作
-                .map(it -> new HttpResult(HttpStatus.OK.value(), "成功", null))  // 成功注册
+                .map(it -> new HttpResult(HttpStatus.OK.value(), "成功", it))  // 成功注册
                 .onErrorResume(e -> {
                     // 日志记录错误
                     log.error("失败", e);

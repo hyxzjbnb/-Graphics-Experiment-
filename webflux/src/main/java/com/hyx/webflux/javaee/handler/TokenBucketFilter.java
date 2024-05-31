@@ -50,7 +50,7 @@ public class TokenBucketFilter implements WebFilter {
         ServerHttpRequest request = exchange.getRequest();
         ServerHttpResponse response = exchange.getResponse();
         String path = request.getPath().value();
-        if (path.startsWith("/products1111")) {
+        if (path.startsWith("/products")) {
             if (tokenBucket.allowRequest()) {
                 return chain.filter(exchange);
             } else {

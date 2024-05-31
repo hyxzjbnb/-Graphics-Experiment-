@@ -14,3 +14,14 @@ spring:
 jwt:
   expiration:
     duration: 3600
+
+logging:
+  level:
+    root: INFO
+    org.springframework: INFO
+    com.ffzs.webflux: DEBUG  # 设置你的应用程序包的日志级别
+  file:
+    name: file.log  # 将日志输出到文件
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"  # 控制台输出格式
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"     # 文件输出格式
