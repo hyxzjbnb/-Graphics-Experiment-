@@ -21,14 +21,17 @@ import java.time.LocalDateTime;
 @Slf4j
 @RequiredArgsConstructor
 public class ProductCaching {
+
     private final ProductRepository productRepository;
 //往缓存里更新
 
     @RedisReactiveCacheUpdate(key = "#product.name")
     public Mono<Product> updateProduct(Product product) {
-        return productRepository.findById(product.getId())
+        String a = product.getName();
+        log.info("{}",a);
+        return productRepository.findByName(a)
                 .flatMap(product1 ->{product1.setDescription(product.getDescription());
-                product1.setPrice(product1.getPrice());
+                product1.setPrice(product.getPrice());
                 return productRepository.save(product1);});
     }
 //同时删数据库和缓存
@@ -56,7 +59,7 @@ public class ProductCaching {
         return productRepository.findById(id);
     }
 //保存到缓存里
-    @RedisReactiveCacheAdd(key = "#product.name", useArgsHash = true)
+    @RedisReactiveCacheAdd(key = "#product.name")
     public Mono<Product> saveProduct(Product product) {
         return productRepository.save(product)
                 .doOnSuccess(savedUser -> log.info("保存成功: " + savedUser))

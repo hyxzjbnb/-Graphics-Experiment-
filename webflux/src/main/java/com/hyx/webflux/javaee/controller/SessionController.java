@@ -10,9 +10,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Mono;
 
-/**
- * @author jitta
- */
 @Slf4j
 @RestController
 @RequestMapping("session")

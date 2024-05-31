@@ -45,7 +45,7 @@ public class RedisReactiveCacheAspect {
         Class<?> returnType = method.getReturnType();
         RedisReactiveCacheAdd annotation = method.getAnnotation(RedisReactiveCacheAdd.class);
         String key = aspectUtils.getKeyVal(joinPoint, annotation.key(), annotation.useArgsHash());
-        log.info("Evaluated Redis cacheKey: " + key);
+        //log.info("Evaluated Redis cacheKey: " + key);
         if (returnType.isAssignableFrom(Mono.class)) {
             return methodMonoResponseToCache(joinPoint, key);
         } else if (returnType.isAssignableFrom(Flux.class)) {
