@@ -1,0 +1,1 @@
+{"vehicles":[{"id":"V001","type":"forklift","speed":2,"status":"in_use","location":"warehouse"},{"id":"V002","type":"conveyor_belt","speed":3,"status":"idle","location":"logistic_point"}]}

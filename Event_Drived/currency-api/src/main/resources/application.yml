@@ -1,0 +1,20 @@
+spring:
+  application:
+    name: warehouse-api
+  cloud:
+    stream:
+      kafka:
+        binder:
+          brokers: ${KAFKA_HOST:localhost}:${KAFKA_PORT:9092}
+      bindings:
+        prices-out-0:
+          destination: warehouse.api.price
+app:
+  crawler:
+    default-depth: 1
+    max-depth-allowed: 5
+    time-out: 5000
+    follow-redirects: true
+    url: https://www.tgju.org/profile/price_dollar_rl
+server:
+  port: 8082
