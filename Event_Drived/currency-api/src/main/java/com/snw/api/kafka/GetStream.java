@@ -112,6 +112,7 @@ public class GetStream {
             streamer.publishAssignmentResultEvent(event, "null","failure",0);
             return;
         }
+        event.setWarehouseId(allocatedWarehouse.get("id").asText());
 
         // 计算到达时间
         int distance = allocatedWarehouse.get("distanceFromLogisticPoint").asInt();

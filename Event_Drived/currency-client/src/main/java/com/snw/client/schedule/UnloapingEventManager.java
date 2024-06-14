@@ -27,6 +27,7 @@ public class UnloapingEventManager {
     @Autowired
     private SimpMessagingTemplate messagingTemplate;
 
+
     private long TypedelayMillis; // 存储延迟时间
 
     // 发布事件的方法
@@ -41,22 +42,37 @@ public class UnloapingEventManager {
             log.info("GoodsArrived event sent: {}", event);
 
             // 等待分配结果并处理
-            waitForNextEventInfo("assignment-result-out-0", event, topic).thenAccept(nextEventInfo -> {
-                if (nextEventInfo.isSuccess()) {
-                    TypedelayMillis = nextEventInfo.getTime() * 6 * 100; // 计算延迟时间（单位为毫秒）
-                    messagingTemplate.convertAndSend("/topic/text", "需要等待" + TypedelayMillis + "毫秒车才来");
-                    log.info("Scheduling UnloadingStartedEvent with delay: {} milliseconds", TypedelayMillis);
+            CompletableFuture<NextEventInfo> nextEventFuture = waitForNextEventInfo("assignment-result-out-0", event, topic);
 
-                    // 调度卸货开始事件
-                    scheduleNextEvent(
-                            new UnloadingStartedEvent(
-                                    ((GoodsArrivedEvent) event).getShipmentId(),
-                                    ((GoodsArrivedEvent) event).getWarehouseId(),
-                                    nextEventInfo.getTimestamp(),
-                                    nextEventInfo.getVehicleId()
-                            ),
-                            TypedelayMillis
-                    );
+            // 设置超时处理
+            CompletableFuture<NextEventInfo> timeoutFuture = failAfterTimeout(100, TimeUnit.SECONDS);
+
+            CompletableFuture.anyOf(nextEventFuture, timeoutFuture).thenAccept(result -> {
+                if (result == timeoutFuture) {
+                    // 处理超时情况
+                    messagingTemplate.convertAndSend("/topic/text", "等待超时，操作失败");
+                    log.info("Operation failed due to timeout.");
+                } else {
+                    NextEventInfo nextEventInfo = (NextEventInfo) result;
+                    if (nextEventInfo.isSuccess()) {
+                        long delayMillis = nextEventInfo.getTime() * 6 * 100; // 计算延迟时间（单位为毫秒）
+                        TypedelayMillis = delayMillis;
+                        messagingTemplate.convertAndSend("/topic/text", "需要等待" + delayMillis + "毫秒车才来");
+                        log.info("Scheduling UnloadingStartedEvent with delay: {} milliseconds", delayMillis);
+
+                        // 调度卸货开始事件
+                        scheduleNextEvent(
+                                new UnloadingStartedEvent(
+                                        ((GoodsArrivedEvent) event).getShipmentId(),
+                                        ((GoodsArrivedEvent) event).getWarehouseId(),
+                                        nextEventInfo.getTimestamp(),
+                                        nextEventInfo.getVehicleId()
+                                ),
+                                delayMillis
+                        );
+                    }else{
+                        messagingTemplate.convertAndSend("/topic/text", "1操作失败");
+                    }
                 }
             });
 
@@ -66,22 +82,37 @@ public class UnloapingEventManager {
             log.info("UnloadingStarted event sent: {}", event);
 
             // 等待结果并处理
-            waitForNextEventInfo("result-out-0", event, topic).thenAccept(nextEventInfo -> {
-                if (nextEventInfo.isSuccess()) {
-                    long delayMillis = TypedelayMillis + nextEventInfo.getTime() * 6 * 100; // 计算总的延迟时间（单位为毫秒）
-                    messagingTemplate.convertAndSend("/topic/text", "需要等待" + delayMillis + "毫秒结束卸货");
-                    log.info("Scheduling UnloadingCompletedEvent with delay: {} milliseconds", delayMillis);
+            CompletableFuture<NextEventInfo> nextEventFuture = waitForNextEventInfo("result-out-0", event, topic);
 
-                    // 调度卸货完成事件
-                    scheduleNextEvent(
-                            new UnloadingCompletedEvent(
-                                    ((UnloadingStartedEvent) event).getShipmentId(),
-                                    ((UnloadingStartedEvent) event).getWarehouseId(),
-                                    nextEventInfo.getTimestamp(),
-                                    ((UnloadingStartedEvent) event).getVehicleId()
-                            ),
-                            delayMillis
-                    );
+            // 设置超时处理
+            CompletableFuture<NextEventInfo> timeoutFuture = failAfterTimeout(5, TimeUnit.SECONDS);
+
+            CompletableFuture.anyOf(nextEventFuture, timeoutFuture).thenAccept(result -> {
+                if (result == timeoutFuture) {
+                    // 处理超时情况
+                    messagingTemplate.convertAndSend("/topic/text", "等待超时，操作失败");
+                    log.info("Operation failed due to timeout.");
+                } else {
+                    NextEventInfo nextEventInfo = (NextEventInfo) result;
+                    if (nextEventInfo.isSuccess()) {
+                        long delayMillis = TypedelayMillis + nextEventInfo.getTime() * 6 * 100; //// 计算总的延迟时间（单位为毫秒）
+                        TypedelayMillis = TypedelayMillis+delayMillis;
+                        messagingTemplate.convertAndSend("/topic/text", "需要等待" + delayMillis + "毫秒结束卸货");
+                        log.info("Scheduling UnloadingCompletedEvent with delay: {} milliseconds", delayMillis);
+
+                        // 调度卸货完成事件
+                        scheduleNextEvent(
+                                new UnloadingCompletedEvent(
+                                        ((UnloadingStartedEvent) event).getShipmentId(),
+                                        ((UnloadingStartedEvent) event).getWarehouseId(),
+                                        nextEventInfo.getTimestamp(),
+                                        ((UnloadingStartedEvent) event).getVehicleId()
+                                ),
+                                delayMillis
+                        );
+                    }else{
+                        messagingTemplate.convertAndSend("/topic/text", "2操作失败");
+                    }
                 }
             });
 
@@ -90,7 +121,7 @@ public class UnloapingEventManager {
             messagingTemplate.convertAndSend("/topic/unloadingCompleted", event);
             streamBridge.send(topic, event);
             log.info("UnloadingCompleted event sent: {}", event);
-            messagingTemplate.convertAndSend("/topic/text", "卸货完成");
+            //messagingTemplate.convertAndSend("/topic/text", "卸货完成，总耗费事件"+TypedelayMillis);
             // 对于卸货完成事件，不需要等待 success 回复，可以直接结束流程
 
         } else {
@@ -99,6 +130,14 @@ public class UnloapingEventManager {
         }
     }
 
+    private CompletableFuture<NextEventInfo> failAfterTimeout(long timeout, TimeUnit unit) {
+        CompletableFuture<NextEventInfo> promise = new CompletableFuture<>();
+        scheduler.schedule(() -> {
+            promise.completeExceptionally(new TimeoutException("操作超时"));
+        }, timeout, unit);
+        //messagingTemplate.convertAndSend("/topic/text", "操作失败");
+        return promise;
+    }
     // 调度下一个事件的方法
     private void scheduleNextEvent(Object nextEvent, long delayMillis) {
         log.info("等待调度下一个事件");
@@ -188,7 +227,7 @@ public class UnloapingEventManager {
 
         public NextEventInfo(boolean success, long timestamp, String vehicleId, int time) {
             this.success = success;
-            this.timestamp = String.valueOf(timestamp);
+            this.timestamp = java.lang.String.valueOf(timestamp);
             this.vehicleId = vehicleId;
             this.time = time;
         }

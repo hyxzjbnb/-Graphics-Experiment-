@@ -3,26 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>Kafka 事件查看器 & 车辆信息</title>
+    <!-- 引入 Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
         }
-        h2, h3 {
+        .card-header, .card-body, .modal-body {
             color: #2c3e50;
-        }
-        #events, #vehicles {
-            width: 100%;
-            padding: 20px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: #f9f9f9;
-            max-height: 45vh;
-            overflow-y: auto;
-        }
-        #vehicles {
-            margin-top: 20px;
         }
         .message, .vehicle-info {
             padding: 10px;
@@ -31,67 +20,317 @@
             border-radius: 4px;
             background-color: #e0f7fa;
         }
-        form {
-            margin: 20px 0;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: #f0f4c3;
+        .modal-footer button {
+            width: 48%;
         }
-        form label {
-            display: block;
-            margin: 5px 0;
-        }
-        form input, form button {
-            padding: 10px;
-            margin: 5px 0;
-            width: 100%;
+        #status {
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
-<h2>Kafka 事件查看器 & 车辆信息</h2>
-<div id="events">
-    <h3>Kafka 事件查看器</h3>
-    <div id="messages">
-        <h3>消息:</h3>
+<div class="container-fluid">
+    <div class="row">
+        <!-- 左边的消息区域 -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Kafka 事件查看器</h3>
+                    <button class="btn btn-danger btn-sm" onclick="clearMessages()">清空消息</button>
+                </div>
+                <div class="card-body" id="messages">
+                    <h4>消息:</h4>
+                </div>
+            </div>
+        </div>
+        <!-- 右边的控制区域 -->
+        <div class="col-md-8">
+                <div class="card mb-3">
+                    <div class="card-header">
+                        <h3>仓库信息</h3>
+                        <button class="btn btn-primary btn-sm" onclick="fetchWarehouses()">刷新仓库信息</button>
+                    </div>
+                    <div class="card-body" id="warehouseList">
+                        <h4>仓库:</h4>
+                    </div>
+                    <div class="card-footer">
+                        <button class="btn btn-success" onclick="$('#addWarehouseModal').modal('show')">添加新仓库</button>
+                        <button class="btn btn-warning" onclick="$('#updateWarehouseModal').modal('show')">更新仓库容量和大小</button>
+                        <button class="btn btn-danger" onclick="$('#deleteWarehouseModal').modal('show')">删除仓库</button>
+                    </div>
+                </div>
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h3>车辆信息</h3>
+                    <button class="btn btn-primary btn-sm" onclick="fetchVehicles()">刷新车辆信息</button>
+                </div>
+                <div class="card-body" id="vehicleList">
+                    <h4>车辆:</h4>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-success" onclick="$('#addVehicleModal').modal('show')">添加新车辆</button>
+                    <button class="btn btn-warning" onclick="$('#updateSpeedModal').modal('show')">更新车辆速度</button>
+                    <button class="btn btn-warning" onclick="$('#cancleSpeedModal').modal('show')">删除指定车辆</button>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3>事件调度器</h3>
+                </div>
+                <div class="card-body">
+                    <div id="processResult">
+                        <h4>过程结果:</h4>
+                        <p id="resultText"></p>
+                    </div>
+                    <div class="form-group">
+                        <label for="goodsQuantity">到达货物数量:</label>
+                        <input type="number" class="form-control" id="goodsQuantity" name="goodsQuantity" value="100" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="publishCount">发布信息的次数:</label>
+                        <input type="number" class="form-control" id="publishCount" name="publishCount" value="5" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="interval">发布间隔（毫秒）:</label>
+                        <input type="number" class="form-control" id="interval" name="interval" value="1000" required>
+                    </div>
+                    <button class="btn btn-primary" onclick="startUnloadingProcess()">开始卸货过程</button>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
-<div id="vehicles">
-    <h3>车辆信息</h3>
-    <button onclick="fetchVehicles()">刷新车辆信息</button>
-    <div id="vehicleList">
-        <h3>车辆:</h3>
+<!-- 添加新仓库模态框 -->
+<div class="modal fade" id="addWarehouseModal" tabindex="-1" role="dialog" aria-labelledby="addWarehouseModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addWarehouseModalLabel">添加新仓库</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="addWarehouseForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="warehouseId">仓库ID:</label>
+                        <input type="text" class="form-control" id="warehouseId" name="warehouseId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="availableSlots">可用空间:</label>
+                        <input type="number" class="form-control" id="availableSlots" name="availableSlots" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="distanceFromLogisticPoint">离物流点距离:</label>
+                        <input type="number" class="form-control" id="distanceFromLogisticPoint" name="distanceFromLogisticPoint" required>
+                    </div>
+                    <div class="form-group">
+                        <label>尺寸 (x, y, z):</label>
+                        <div class="form-row">
+                            <div class="col">
+                                <input type="number" class="form-control" id="dimensionX" name="dimensionX" placeholder="x" required>
+                            </div>
+                            <div class="col">
+                                <input type="number" class="form-control" id="dimensionY" name="dimensionY" placeholder="y" required>
+                            </div>
+                            <div class="col">
+                                <input type="number" class="form-control" id="dimensionZ" name="dimensionZ" placeholder="z" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">添加</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                </div>
+            </form>
+        </div>
     </div>
-    <h3>添加新车辆</h3>
-    <form id="addVehicleForm">
-        <label for="vehicleId">车辆ID:</label>
-        <input type="text" id="vehicleId" name="vehicleId" required>
-        <label for="vehicleStatus">状态:</label>
-        <input type="text" id="vehicleStatus" name="vehicleStatus" required>
-        <label for="vehicleType">类型:</label>
-        <input type="text" id="vehicleType" name="vehicleType" required>
-        <label for="vehicleModel">型号:</label>
-        <input type="text" id="vehicleModel" name="vehicleModel" required>
-        <label for="vehicleSpeed">速度:</label>
-        <input type="text" id="vehicleSpeed" name="vehicleSpeed" required>
-        <button type="submit">添加车辆</button>
-    </form>
-    <h3>更新车辆速度</h3>
-    <form id="updateVehicleSpeedForm">
-        <label for="updateVehicleId">车辆ID:</label>
-        <input type="text" id="updateVehicleId" name="updateVehicleId" required>
-        <label for="updateVehicleSpeed">新速度:</label>
-        <input type="text" id="updateVehicleSpeed" name="updateVehicleSpeed" required>
-        <button type="submit">更新速度</button>
-    </form>
 </div>
+<!-- 更新仓库容量和尺寸模态框 -->
+<div class="modal fade" id="updateWarehouseModal" tabindex="-1" role="dialog" aria-labelledby="updateWarehouseModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateWarehouseModalLabel">更新仓库容量和尺寸</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="updateWarehouseForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="updateWarehouseId">仓库ID:</label>
+                        <input type="text" class="form-control" id="updateWarehouseId" name="updateWarehouseId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="newCapacity">新容量:</label>
+                        <input type="number" class="form-control" id="newCapacity" name="newCapacity" required>
+                    </div>
+                    <div class="form-group">
+                        <label>新尺寸 (x, y, z):</label>
+                        <div class="form-row">
+                            <div class="col">
+                                <input type="number" class="form-control" id="newDimensionX" name="newDimensionX" placeholder="x" required>
+                            </div>
+                            <div class="col">
+                                <input type="number" class="form-control" id="newDimensionY" name="newDimensionY" placeholder="y" required>
+                            </div>
+                            <div class="col">
+                                <input type="number" class="form-control" id="newDimensionZ" name="newDimensionZ" placeholder="z" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">更新</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- 添加新车辆模态框 -->
+<div class="modal fade" id="addVehicleModal" tabindex="-1" role="dialog" aria-labelledby="addVehicleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addVehicleModalLabel">添加新车辆</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="addVehicleForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="vehicleId">车辆ID:</label>
+                        <input type="text" class="form-control" id="vehicleId" name="vehicleId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vehicleStatus">状态:</label>
+                        <input type="text" class="form-control" id="vehicleStatus" name="vehicleStatus" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vehicleType">类型:</label>
+                        <input type="text" class="form-control" id="vehicleType" name="vehicleType" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vehicleModel">型号:</label>
+                        <input type="text" class="form-control" id="vehicleModel" name="vehicleModel" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vehicleSpeed">速度:</label>
+                        <input type="text" class="form-control" id="vehicleSpeed" name="vehicleSpeed" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">添加</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 更新车辆速度模态框 -->
+<div class="modal fade" id="updateSpeedModal" tabindex="-1" role="dialog" aria-labelledby="updateSpeedModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="updateSpeedModalLabel">更新车辆速度</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="updateVehicleSpeedForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="updateVehicleId">车辆ID:</label>
+                        <input type="text" class="form-control" id="updateVehicleId" name="updateVehicleId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="updateVehicleSpeed">新速度:</label>
+                        <input type="text" class="form-control" id="updateVehicleSpeed" name="updateVehicleSpeed" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">更新</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- 更新车辆速度模态框 -->
+<div class="modal fade" id="cancleSpeedModal" tabindex="-1" role="dialog" aria-labelledby="updateSpeedModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancleSpeedModalLabel">删除车辆</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="cancleSpeedModalForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="updateVehicleId">车辆ID:</label>
+                        <input type="text" class="form-control" id="cancleVehicleId" name="updateVehicleId" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">删除</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- 删除仓库模态框 -->
+<div class="modal fade" id="deleteWarehouseModal" tabindex="-1" role="dialog" aria-labelledby="deleteWarehouseModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteWarehouseModalLabel">删除仓库</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="deleteWarehouseForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="deleteWarehouseId">仓库ID:</label>
+                        <input type="text" class="form-control" id="deleteWarehouseId" name="deleteWarehouseId" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger">删除</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- 引入 Bootstrap 和 jQuery 的 JavaScript -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 <script>
-    // Kafka 事件查看器 JavaScript
+    // WebSocket 事件查看器 JavaScript
     var socket = new SockJS('http://localhost:8003/currency'); // WebSocket 端点来自 WebSocketConfig
     var stompClient = Stomp.over(socket);
+    var flag = 0;
+    var startTime;
+    var successCount = 0;
+    var failureCount = 0;
+    var totalMessages = 0;
+    var expectedMessages = 0;
 
     // 连接到 WebSocket 服务器
     stompClient.connect({}, function (frame) {
@@ -100,6 +339,7 @@
         // 订阅主题
         stompClient.subscribe('/topic/goodsArrived', function (message) {
             showMessage('货物已到达', JSON.parse(message.body));
+            totalMessages++;
         });
         stompClient.subscribe('/topic/unloadingStarted', function (message) {
             showMessage('卸货已开始', JSON.parse(message.body));
@@ -114,7 +354,24 @@
             showMessage('处理结果', JSON.parse(message.body));
         });
         stompClient.subscribe('/topic/text', function (message) {
-            show('提示', message.body);
+            var msg = message.body;
+            show('提示', msg);
+
+            // 检查消息是否包含操作失败的信息
+            if (msg.includes("操作失败")) {
+                failureCount++;
+            } else if (msg.includes("成功")) {
+                successCount++;
+            }
+
+            // 当收到的消息数达到预期的消息数时，计算结果
+            if (totalMessages >= expectedMessages && flag == 0) {
+                flag = 1;
+                let endTime = new Date().getTime();
+                let duration = (endTime - startTime) / 1000; // 持续时间（秒）
+                let successRate = ((expectedMessages - failureCount) / expectedMessages) * 100; // 成功率
+                document.getElementById('resultText').textContent = `过程完成。持续时间: ${duration}秒，成功率: ${successRate.toFixed(2)}%`;
+            }
         });
     });
 
@@ -135,6 +392,12 @@
         messagesDiv.appendChild(messageElement);
     }
 
+    // 清空消息
+    function clearMessages() {
+        var messagesDiv = document.getElementById('messages');
+        messagesDiv.innerHTML = '<h4>消息:</h4>';
+    }
+
     // 获取车辆信息 JavaScript
     async function fetchVehicles() {
         try {
@@ -142,7 +405,7 @@
             const vehicles = await response.json();
 
             var vehicleListDiv = document.getElementById('vehicleList');
-            vehicleListDiv.innerHTML = '<h3>车辆:</h3>'; // 清除现有内容
+            vehicleListDiv.innerHTML = '<h4>车辆:</h4>'; // 清除现有内容
 
             vehicles.forEach(vehicle => {
                 var vehicleElement = document.createElement('div');
@@ -183,6 +446,7 @@
             if (response.ok) {
                 alert('车辆添加成功！');
                 fetchVehicles(); // 刷新车辆列表
+                $('#addVehicleModal').modal('hide');
             } else {
                 alert('添加车辆失败');
             }
@@ -218,6 +482,7 @@
                 if (updateResponse.ok) {
                     alert('车辆速度更新成功！');
                     fetchVehicles(); // 刷新车辆列表
+                    $('#updateSpeedModal').modal('hide');
                 } else {
                     alert('更新车辆速度失败');
                 }
@@ -228,11 +493,235 @@
             console.error('更新车辆速度时出错:', error);
         }
     }
+    // 删除车辆速度
+    async function cancleSpeedModal(event) {
+        event.preventDefault();
+
+        const vehicleId = document.getElementById('cancleVehicleId').value;
+
+        // 获取现有车辆详细信息，更新速度，并发送 PUT 请求
+        try {
+            const response = await fetch('http://localhost:8082/api/vehicles/all');
+            const vehicles = await response.json();
+            const vehicle = vehicles.find(v => v.id === vehicleId);
+
+            if (vehicle) {
+                const updateResponse = await fetch(`http://localhost:8082/api/vehicles/delete/${vehicleId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(vehicle)
+                });
+
+                if (updateResponse.ok) {
+                    alert('车辆删除成功！');
+                    fetchVehicles(); // 刷新车辆列表
+                    $('#updateSpeedModal').modal('hide');
+                } else {
+                    alert('车辆删除失败');
+                }
+            } else {
+                alert('未找到车辆');
+            }
+        } catch (error) {
+            console.error('车辆删除出错:', error);
+        }
+    }
+
+    // 开始卸货过程
+    async function startUnloadingProcess() {
+        const goodsQuantity = document.getElementById('goodsQuantity').value;
+        const publishCount = document.getElementById('publishCount').value;
+        const interval = document.getElementById('interval').value;
+
+        successCount = 0;
+        failureCount = 0;
+        totalMessages = 0;
+        flag = 0;
+        expectedMessages = publishCount; // 我们期望接收到的总消息数等于发布的次数
+        startTime = new Date().getTime();
+
+        document.getElementById('resultText').textContent = '卸货过程开始...';
+
+        for (let i = 0; i < publishCount; i++) {
+            setTimeout(async () => {
+                const unloadingEvent = {
+                    shipmentId: 'SH' + new Date().getTime(), // 使用当前时间戳生成唯一ID
+                    warehouseId: 'WH12345',
+                    itemId: 'IT67890',
+                    quantity: parseInt(goodsQuantity),
+                    eventType: 'unloadingStarted',
+                    timestamp: new Date().toISOString()
+                };
+
+                try {
+                    const response = await fetch('http://localhost:8003/unloading/goods-arrived', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(unloadingEvent)
+                    });
+
+                    if (response.ok) {
+                        updateStatus(`卸货事件成功触发: ${i + 1} / ${publishCount}`);
+                    } else {
+                        updateStatus(`卸货事件触发失败: ${i + 1} / ${publishCount}`);
+                    }
+
+                } catch (error) {
+                    updateStatus(`卸货事件触发失败: ${i + 1} / ${publishCount}`);
+                    console.error('触发卸货事件时出错:', error);
+                }
+            }, i * interval);
+        }
+    }
+
+    // 更新卸货过程状态显示
+    function updateStatus(message) {
+        const statusDiv = document.getElementById('status');
+        statusDiv.innerHTML += message + '<br>';
+    }
+    // 获取仓库信息 JavaScript
+    async function fetchWarehouses() {
+        try {
+            const response = await fetch('http://localhost:8082/api/warehouses/all');
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const warehouses = await response.json();
+
+            var warehouseListDiv = document.getElementById('warehouseList');
+            warehouseListDiv.innerHTML = '<h4>仓库:</h4>'; // 清除现有内容
+
+            warehouses.forEach(warehouse => {
+                var warehouseElement = document.createElement('div');
+                warehouseElement.className = 'vehicle-info';
+                warehouseElement.innerHTML = `
+                <strong>ID:</strong> ${warehouse.id}<br>
+                <strong>容量:</strong> ${warehouse.availableSlots}<br>
+                <strong>尺寸:</strong> ${warehouse.dimensions.x} x ${warehouse.dimensions.y} x ${warehouse.dimensions.z}<br>
+                <strong>离物流点距离:</strong> ${warehouse.distanceFromLogisticPoint}
+            `;
+                warehouseListDiv.appendChild(warehouseElement);
+            });
+        } catch (error) {
+            console.error('获取仓库信息时出错:', error);
+        }
+    }
+
+    // 添加新仓库
+    async function addWarehouse(event) {
+        event.preventDefault();
+
+        const warehouse = {
+            id: document.getElementById('warehouseId').value,
+            availableSlots: document.getElementById('availableSlots').value,
+            distanceFromLogisticPoint: document.getElementById('distanceFromLogisticPoint').value,
+            dimensions: {
+                x: document.getElementById('dimensionX').value,
+                y: document.getElementById('dimensionY').value,
+                z: document.getElementById('dimensionZ').value
+            }
+        };
+
+        try {
+            const response = await fetch('http://localhost:8082/api/warehouses/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(warehouse)
+            });
+
+            if (response.ok) {
+                alert('仓库添加成功！');
+                fetchWarehouses(); // 刷新仓库列表
+                $('#addWarehouseModal').modal('hide');
+            } else {
+                alert('添加仓库失败');
+            }
+        } catch (error) {
+            console.error('添加仓库时出错:', error);
+        }
+    }
+
+    // 更新仓库容量和尺寸
+    async function updateWarehouseCapacity(event) {
+        event.preventDefault();
+
+        const warehouseId = document.getElementById('updateWarehouseId').value;
+        const newCapacity = document.getElementById('newCapacity').value;
+        const newDimensions = {
+            x: document.getElementById('newDimensionX').value,
+            y: document.getElementById('newDimensionY').value,
+            z: document.getElementById('newDimensionZ').value
+        };
+        const payload = {
+            availableSlots: newCapacity,
+            dimensions: newDimensions
+        };
+
+        try {
+            const response = await fetch(`http://localhost:8082/api/warehouses/update/${warehouseId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                alert('仓库容量和尺寸更新成功！');
+                fetchWarehouses(); // 刷新仓库列表
+                $('#updateWarehouseModal').modal('hide');
+            } else {
+                alert('更新仓库失败');
+            }
+        } catch (error) {
+            console.error('更新仓库容量和尺寸时出错:', error);
+        }
+    }
+    // 删除仓库
+    async function deleteWarehouse(event) {
+        event.preventDefault();
+
+        const warehouseId = document.getElementById('deleteWarehouseId').value;
+
+        try {
+            const response = await fetch(`http://localhost:8082/api/warehouses/delete/${warehouseId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (response.ok) {
+                alert('仓库删除成功！');
+                fetchWarehouses(); // 刷新仓库列表
+                $('#deleteWarehouseModal').modal('hide');
+            } else {
+                alert('删除仓库失败');
+            }
+        } catch (error) {
+            console.error('删除仓库时出错:', error);
+        }
+    }
+
+    // 表单事件监听器
+    document.getElementById('deleteWarehouseForm').addEventListener('submit', deleteWarehouse);
+
+
+    // 表单事件监听器
+    document.getElementById('addWarehouseForm').addEventListener('submit', addWarehouse);
+    document.getElementById('updateWarehouseForm').addEventListener('submit', updateWarehouseCapacity);
 
     // 表单事件监听器
     document.getElementById('addVehicleForm').addEventListener('submit', addVehicle);
     document.getElementById('updateVehicleSpeedForm').addEventListener('submit', updateVehicleSpeed);
-
+    document.getElementById('cancleSpeedModalForm').addEventListener('submit', cancleSpeedModal);
     // 页面加载时的初始获取
     fetchVehicles();
 </script>

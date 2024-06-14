@@ -1,1 +1,1 @@
-{"vehicles":[{"id":"V001","type":"forklift","speed":"10","status":"in_use","location":"warehouse"},{"id":"V002","type":"conveyor_belt","speed":3,"status":"idle","location":"logistic_point"},{"id":"V003","status":"idle","type":"none","model":"none","speed":"2"}]}
+{"vehicles":[{"id":"V001","type":"forklift","speed":"100","status":"idle","location":"warehouse"},{"id":"V002","type":"conveyor_belt","speed":"100","status":"idle","location":"logistic_point"}]}
