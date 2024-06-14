@@ -1,59 +1,124 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <title>Kafka Event Viewer</title>
+    <title>Kafka 事件查看器 & 车辆信息</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
         }
-        h2 {
+        h2, h3 {
             color: #2c3e50;
         }
-        #messages {
+        #events, #vehicles {
+            width: 100%;
+            padding: 20px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            max-height: 45vh;
+            overflow-y: auto;
+        }
+        #vehicles {
             margin-top: 20px;
         }
-        .message {
+        .message, .vehicle-info {
             padding: 10px;
             border: 1px solid #ccc;
             margin: 10px 0;
             border-radius: 4px;
-            background-color: #f9f9f9;
+            background-color: #e0f7fa;
+        }
+        form {
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background-color: #f0f4c3;
+        }
+        form label {
+            display: block;
+            margin: 5px 0;
+        }
+        form input, form button {
+            padding: 10px;
+            margin: 5px 0;
+            width: 100%;
         }
     </style>
 </head>
 <body>
-<h2>Kafka Event Viewer</h2>
-<div id="messages">
-    <h3>Messages:</h3>
+<h2>Kafka 事件查看器 & 车辆信息</h2>
+<div id="events">
+    <h3>Kafka 事件查看器</h3>
+    <div id="messages">
+        <h3>消息:</h3>
+    </div>
+</div>
+<div id="vehicles">
+    <h3>车辆信息</h3>
+    <button onclick="fetchVehicles()">刷新车辆信息</button>
+    <div id="vehicleList">
+        <h3>车辆:</h3>
+    </div>
+    <h3>添加新车辆</h3>
+    <form id="addVehicleForm">
+        <label for="vehicleId">车辆ID:</label>
+        <input type="text" id="vehicleId" name="vehicleId" required>
+        <label for="vehicleStatus">状态:</label>
+        <input type="text" id="vehicleStatus" name="vehicleStatus" required>
+        <label for="vehicleType">类型:</label>
+        <input type="text" id="vehicleType" name="vehicleType" required>
+        <label for="vehicleModel">型号:</label>
+        <input type="text" id="vehicleModel" name="vehicleModel" required>
+        <label for="vehicleSpeed">速度:</label>
+        <input type="text" id="vehicleSpeed" name="vehicleSpeed" required>
+        <button type="submit">添加车辆</button>
+    </form>
+    <h3>更新车辆速度</h3>
+    <form id="updateVehicleSpeedForm">
+        <label for="updateVehicleId">车辆ID:</label>
+        <input type="text" id="updateVehicleId" name="updateVehicleId" required>
+        <label for="updateVehicleSpeed">新速度:</label>
+        <input type="text" id="updateVehicleSpeed" name="updateVehicleSpeed" required>
+        <button type="submit">更新速度</button>
+    </form>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 <script>
-    var socket = new SockJS('http://localhost:8003/currency'); // WebSocket endpoint from WebSocketConfig
+    // Kafka 事件查看器 JavaScript
+    var socket = new SockJS('http://localhost:8003/currency'); // WebSocket 端点来自 WebSocketConfig
     var stompClient = Stomp.over(socket);
 
-    // Connect to the WebSocket server
+    // 连接到 WebSocket 服务器
     stompClient.connect({}, function (frame) {
-        console.log('Connected: ' + frame);
+        console.log('已连接: ' + frame);
 
-        // Subscribe to topics
+        // 订阅主题
         stompClient.subscribe('/topic/goodsArrived', function (message) {
-            showMessage('Goods Arrived', JSON.parse(message.body));
+            showMessage('货物已到达', JSON.parse(message.body));
         });
         stompClient.subscribe('/topic/unloadingStarted', function (message) {
-            showMessage('Unloading Started', JSON.parse(message.body));
+            showMessage('卸货已开始', JSON.parse(message.body));
         });
         stompClient.subscribe('/topic/unloadingCompleted', function (message) {
-            showMessage('Unloading Completed', JSON.parse(message.body));
+            showMessage('卸货已完成', JSON.parse(message.body));
         });
         stompClient.subscribe('/topic/assignmentResult', function (message) {
-            showMessage('Assignment Result', JSON.parse(message.body));
+            showMessage('分配结果', JSON.parse(message.body));
+        });
+        stompClient.subscribe('/topic/handleResult', function (message) {
+            showMessage('处理结果', JSON.parse(message.body));
+        });
+        stompClient.subscribe('/topic/text', function (message) {
+            show('提示', message.body);
         });
     });
 
-    // Display the message in the messages div
+    // 在消息div中显示消息
     function showMessage(type, message) {
         var messagesDiv = document.getElementById('messages');
         var messageElement = document.createElement('div');
@@ -61,6 +126,115 @@
         messageElement.innerHTML = '<strong>' + type + '</strong>: ' + JSON.stringify(message, null, 2);
         messagesDiv.appendChild(messageElement);
     }
+
+    function show(type, message) {
+        var messagesDiv = document.getElementById('messages');
+        var messageElement = document.createElement('div');
+        messageElement.className = 'message';
+        messageElement.innerHTML = '<strong>' + type + '</strong>: ' + message;
+        messagesDiv.appendChild(messageElement);
+    }
+
+    // 获取车辆信息 JavaScript
+    async function fetchVehicles() {
+        try {
+            const response = await fetch('http://localhost:8082/api/vehicles/all');
+            const vehicles = await response.json();
+
+            var vehicleListDiv = document.getElementById('vehicleList');
+            vehicleListDiv.innerHTML = '<h3>车辆:</h3>'; // 清除现有内容
+
+            vehicles.forEach(vehicle => {
+                var vehicleElement = document.createElement('div');
+                vehicleElement.className = 'vehicle-info';
+                vehicleElement.innerHTML = `
+                        <strong>ID:</strong> ${vehicle.id}<br>
+                        <strong>速度:</strong> ${vehicle.speed || '未定义'}<br>
+                        <strong>状态:</strong> ${vehicle.status}
+                    `;
+                vehicleListDiv.appendChild(vehicleElement);
+            });
+        } catch (error) {
+            console.error('获取车辆信息时出错:', error);
+        }
+    }
+
+    // 添加新车辆
+    async function addVehicle(event) {
+        event.preventDefault();
+
+        const vehicle = {
+            id: document.getElementById('vehicleId').value,
+            status: document.getElementById('vehicleStatus').value,
+            type: document.getElementById('vehicleType').value,
+            model: document.getElementById('vehicleModel').value,
+            speed: document.getElementById('vehicleSpeed').value
+        };
+
+        try {
+            const response = await fetch('http://localhost:8082/api/vehicles/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(vehicle)
+            });
+
+            if (response.ok) {
+                alert('车辆添加成功！');
+                fetchVehicles(); // 刷新车辆列表
+            } else {
+                alert('添加车辆失败');
+            }
+        } catch (error) {
+            console.error('添加车辆时出错:', error);
+        }
+    }
+
+    // 更新车辆速度
+    async function updateVehicleSpeed(event) {
+        event.preventDefault();
+
+        const vehicleId = document.getElementById('updateVehicleId').value;
+        const newSpeed = document.getElementById('updateVehicleSpeed').value;
+
+        // 获取现有车辆详细信息，更新速度，并发送 PUT 请求
+        try {
+            const response = await fetch('http://localhost:8082/api/vehicles/all');
+            const vehicles = await response.json();
+            const vehicle = vehicles.find(v => v.id === vehicleId);
+
+            if (vehicle) {
+                vehicle.speed = newSpeed;
+
+                const updateResponse = await fetch(`http://localhost:8082/api/vehicles/update/${vehicleId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(vehicle)
+                });
+
+                if (updateResponse.ok) {
+                    alert('车辆速度更新成功！');
+                    fetchVehicles(); // 刷新车辆列表
+                } else {
+                    alert('更新车辆速度失败');
+                }
+            } else {
+                alert('未找到车辆');
+            }
+        } catch (error) {
+            console.error('更新车辆速度时出错:', error);
+        }
+    }
+
+    // 表单事件监听器
+    document.getElementById('addVehicleForm').addEventListener('submit', addVehicle);
+    document.getElementById('updateVehicleSpeedForm').addEventListener('submit', updateVehicleSpeed);
+
+    // 页面加载时的初始获取
+    fetchVehicles();
 </script>
 </body>
 </html>

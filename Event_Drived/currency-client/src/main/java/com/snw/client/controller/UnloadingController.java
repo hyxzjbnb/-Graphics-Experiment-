@@ -9,8 +9,11 @@ import com.snw.client.domain.GoodsArrivedRequest;
 import com.snw.client.domain.Result;
 import com.snw.client.domain.UnloadingCompletedRequest;
 import com.snw.client.domain.UnloadingStartedRequest;
-import com.snw.client.kafka.GetStream;
+import com.snw.client.event.GoodsArrivedEvent;
+import com.snw.client.event.UnloadingCompletedEvent;
+import com.snw.client.event.UnloadingStartedEvent;
 import com.snw.client.kafka.PostStream;
+import com.snw.client.schedule.UnloapingEventManager;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,6 +23,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/unloading")
 public class UnloadingController {
+
+    @Autowired
+    private UnloapingEventManager eventProcessor;
 
     @Autowired
     private PostStream Streamer;
@@ -48,7 +54,8 @@ public class UnloadingController {
             Streamer.publishUnloadingStarted(
                     request.getShipmentId(),
                     request.getWarehouseId(),
-                    request.getStartTime()
+                    request.getStartTime(),
+                    request.getVehicleId()
             );
             return Result.success("UnloadingStarted event published successfully");
         } catch (Exception e) {
@@ -63,12 +70,34 @@ public class UnloadingController {
             Streamer.publishUnloadingCompleted(
                     request.getShipmentId(),
                     request.getWarehouseId(),
-                    request.getVehicleId(),
-                    request.getCompletionTime()
+                    request.getCompletionTime(),
+                    request.getVehicleId()
             );
             return Result.success("UnloadingCompleted event published successfully");
         } catch (Exception e) {
             return Result.error("Failed to publish UnloadingCompleted event").addDevMessages(e.getMessage());
         }
     }
+    //用于实现事件链
+    @PostMapping("/goods-arrived")
+    public String triggerGoodsArrivedEvent(@RequestBody GoodsArrivedEvent event) {
+        eventProcessor.publishEvent(event);
+        return "GoodsArrivedEvent triggered!";
+    }
+
+    // 触发 UnloadingStartedEvent 事件的端点
+    @PostMapping("/unloading-started")
+    public String triggerUnloadingStartedEvent(@RequestBody UnloadingStartedEvent event) {
+        eventProcessor.publishEvent(event);
+        return "UnloadingStartedEvent triggered!";
+    }
+
+    // 触发 UnloadingCompletedEvent 事件的端点
+    @PostMapping("/unloading-completed")
+    public String triggerUnloadingCompletedEvent(@RequestBody UnloadingCompletedEvent event) {
+        eventProcessor.publishEvent(event);
+        return "UnloadingCompletedEvent triggered!";
+    }
+
+
 }

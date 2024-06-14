@@ -176,12 +176,13 @@ client我理解为一个发送器拿在员工手里，api则是系统，他们�
 
 ```json
 {
-  "shipmentId": "SH12345",
-  "warehouseId": "WH001",
-   "itemId": "IT001",
+   "shipmentId": "SH12345",
+   "warehouseId": "WH001",
+   "itemId": "IT002",
    "quantity": 100,
-  "arrivalTime": "2024-06-07T10:00:00Z"
+   "arrivalTime": "2024-06-07T10:00:00Z"
 }
+
 ```
 
 **行为**：
@@ -195,9 +196,10 @@ client我理解为一个发送器拿在员工手里，api则是系统，他们�
 
 ```json
 {
-  "shipmentId": "SH12345",
-  "warehouseId": "WH001",
-  "startTime": "2024-06-07T10:05:00Z"
+   "shipmentId": "SH12345",
+   "warehouseId": "WH001",
+   "vehicleId":"V001",
+   "startTime": "2024-06-07T10:05:00Z"
 }
 ```
 
@@ -214,24 +216,24 @@ client我理解为一个发送器拿在员工手里，api则是系统，他们�
 {
   "shipmentId": "SH12345",
   "warehouseId": "WH001",
-  "completionTime": "2024-06-07T10:15:00Z",
-  "VehicleId":"V001"
+  "vehicleId":"V001",
+  "completionTime": "2024-06-07T10:15:00Z"
 }
 ```
-
 **行为**：
 - 生产者（卸货服务）在完成卸货时发布`UnloadingCompleted`事件。
 - 消费者（存储服务）接收到事件后，触发入库流程。
-
+------------------------------
+入库流程
 #### InspectionCompleted
 
 - **生产者**：检查和文档处理服务发布此事件。
 - **消费者**：仓库存储服务监听此事件，准备货物入库。
-
+- 给数据库里的加上documents就好了
+- 然后吧数据放到新表inventory里
 ```json
 {
-  "shipmentId": "SH12345",
-  "warehouseId": "WH001",
+  "id": "IN001",
   "inspectionTime": "2024-06-07T10:25:00Z",
   "documents": {
     "invoice": "INV12345",
@@ -249,16 +251,14 @@ client我理解为一个发送器拿在员工手里，api则是系统，他们�
 
 - **生产者**：仓库存储服务发布此事件。
 - **消费者**：存储服务监听此事件，准备运输货物到仓库。
-
+- 因为处理位置比较复杂，所以位置和数量是分开考虑的然后从上到下放比如（5，5，2）（5，0，2）（0，0，2）-（5，5，1）
+- 处理完之后会自动给他分配格子，检查如果格子变成000，则容量也变成0
 ```json
 {
-  "shipmentId": "SH12345",
-  "warehouseId": "WH001",
-  "allocationTime": "2024-06-07T10:30:00Z",
-  "storageLocation": {"x": 2, "y": 3, "z": 1}
+  status = succes
+           
 }
 ```
-
 **行为**：
 - 生产者（仓库存储服务）在分配仓库位置时发布`StorageLocationAllocated`事件。
 - 消费者（存储服务）接收到事件后，准备运输货物到仓库的具体位置。
@@ -270,10 +270,8 @@ client我理解为一个发送器拿在员工手里，api则是系统，他们�
 
 ```json
 {
-  "shipmentId": "SH12345",
-  "warehouseId": "WH001",
+  "id": "IN001",
   "startTime": "2024-06-07T10:35:00Z",
-  "storageLocation": {"x": 2, "y": 3, "z": 1}
 }
 ```
 

@@ -1,6 +1,8 @@
 package com.snw.client.kafka;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.snw.client.event.GoodsArrivedEvent;
+import com.snw.client.event.InspectionEvent;
 import com.snw.client.event.UnloadingCompletedEvent;
 import com.snw.client.event.UnloadingStartedEvent;
 import lombok.RequiredArgsConstructor;
@@ -9,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cloud.stream.function.StreamBridge;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.Map;
 
 /**
  * @author hyxzjbnb
@@ -33,14 +38,14 @@ public class PostStream {
         log.info("GoodsArrived event sent: {}", event);
     }
    //发布开始卸货事件
-    public void publishUnloadingStarted(String shipmentId, String warehouseId, String startTime) {
-        UnloadingStartedEvent event = new UnloadingStartedEvent(shipmentId, warehouseId, startTime);
+    public void publishUnloadingStarted(String shipmentId, String warehouseId, String startTime,String vehicle) {
+        UnloadingStartedEvent event = new UnloadingStartedEvent(shipmentId, warehouseId, startTime,vehicle);
         messagingTemplate.convertAndSend("/topic/unloadingStarted", event);
         log.info("Received UnloadingStarted event: " + event);
         streamBridge.send("unloading-started-out-0", event);
         log.info("UnloadingStarted event sent: {}", event);
     }
-   //发布解释卸货事件
+   //发布结束卸货事件
     public void publishUnloadingCompleted(String shipmentId, String warehouseId, String completionTime,String vehicleId) {
         UnloadingCompletedEvent event = new UnloadingCompletedEvent(shipmentId, warehouseId, completionTime,vehicleId);
         messagingTemplate.convertAndSend("/topic/unloadingCompleted", event);
@@ -48,4 +53,15 @@ public class PostStream {
         streamBridge.send("unloading-completed-out-0", event);
         log.info("UnloadingCompleted event sent: {}", event);
     }
+
+
+    //开始入库流程的编写
+    public void processInspection(String id, String inspectionTime, Map<String, String> documents) {
+        // 构建事件
+        InspectionEvent event = new InspectionEvent(id, inspectionTime, documents);
+        // 发布事件到 Kafka 主题
+        streamBridge.send("inspection-documents-topic", event);
+        log.info("Inspection event sent: {}", event);
+    }
+
 }

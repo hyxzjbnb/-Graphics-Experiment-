@@ -3,6 +3,7 @@ package com.snw.client.kafka;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.snw.client.event.AssignmentResultEvent;
 import com.snw.client.event.PostResult;
+import com.snw.client.schedule.UnloapingEventManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
@@ -24,7 +25,12 @@ public class GetStream {
     @Autowired
     private ObjectMapper objectMapper;
 
-    //监听的
+    //这里引入调度事件
+
+    @Autowired
+    private UnloapingEventManager unloapingEventManager; // 引入 UnloapingEventManager
+
+    //监听的(result_0是装箱的回复事件，其他事件自己再写不一样topic的)
     @KafkaListener(topics = {"result-out-0", "assignment-result-out-0"}, groupId = "group_id")
     public void listen(ConsumerRecord<String, byte[]> record) {
         try {
@@ -34,9 +40,11 @@ public class GetStream {
            if (topic.equals("result-out-0")) {
                 PostResult event = objectMapper.readValue(message, PostResult.class);
                 handleResult(event);
+                unloapingEventManager.handleResult(event);
             } else if (topic.equals("assignment-result-out-0")) {
                 AssignmentResultEvent event = objectMapper.readValue(message, AssignmentResultEvent.class);
                 handleAssignmentResult(event);
+                unloapingEventManager.handleAssignmentResult(event);
             } else {
                 log.info("Unknown event type received: " + new String(message));
             }

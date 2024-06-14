@@ -16,6 +16,7 @@ public class UnloadingStartedRequest {
     private String shipmentId;
     private String warehouseId;
     private String startTime;
+    private String vehicleId;
 
     // Getters and setters
     public String getShipmentId() {

@@ -3,6 +3,7 @@ package com.snw.api.kafka;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.snw.api.event.GoodsArrivedEvent;
+import com.snw.api.event.InspectionEvent;
 import com.snw.api.event.UnloadingCompletedEvent;
 import com.snw.api.event.UnloadingStartedEvent;
 import com.snw.api.service.InboundService;
@@ -43,7 +44,7 @@ public class GetStream {
     @Autowired
     private WarehouseService warehouseService;
 
-    @KafkaListener(topics = {"goods-arrived-out-0", "unloading-started-out-0", "unloading-completed-out-0", "assignment-result-out-0"}, groupId = "group_id")
+    @KafkaListener(topics = {"goods-arrived-out-0", "unloading-started-out-0", "unloading-completed-out-0","inspection-documents-topic"}, groupId = "group_id")
     public void listen(ConsumerRecord<String, byte[]> record) {
         try {
             String topic = record.topic();
@@ -58,7 +59,10 @@ public class GetStream {
             } else if (topic.equals("unloading-completed-out-0")) {
                 UnloadingCompletedEvent event = objectMapper.readValue(message, UnloadingCompletedEvent.class);
                 handleUnloadingCompleted(event);
-            } else {
+            }else if (topic.equals("inspection-documents-topic")) {
+                InspectionEvent event = objectMapper.readValue(message, InspectionEvent.class);
+                handleInspection(event);
+            }  else {
                 log.info("Unknown event type received: " + new String(message));
             }
         } catch (Exception e) {
@@ -67,15 +71,18 @@ public class GetStream {
     }
     //处理卸货开始
     private void handleUnloadingStarted(UnloadingStartedEvent event) {
+        log.info("接收到卸货信号");
         //将入库json改成卸货中
         inboundService.startUnloading(event.getShipmentId());
-        streamer.publishResultEvent("","handleUnloadingStarted");
+        streamer.publishResultEvent("success","handleUnloadingStarted");
     }
     //处理卸货结束
     private void handleUnloadingCompleted(UnloadingCompletedEvent event) {
-        //将入库json改成已完成卸货，将对应车子改成空闲中，同时发布检查事件
+        log.info("接收到结束卸货信号");
+        //将入库json改成已完成卸货，将对应车子改成空闲中，同时等待检查事件
         inboundService.completeUnloading(event.getShipmentId());
-        vehicleService.updateVehicleStatus("V001","idle");
+        vehicleService.updateVehicleStatus(event.getVehicleId(),"idle");
+        streamer.publishResultEvent("success","handleUnloadingStarted");
     }
     //收到到达消息后事件的操作
     public void handleGoodsArrived(GoodsArrivedEvent event) {
@@ -116,6 +123,14 @@ public class GetStream {
                 travelTime);
         // 发布分配成功事件
         streamer.publishAssignmentResultEvent(event, allocatedVehicle.get("id").asText(),"success",travelTime);
+
+    }
+
+
+    //入库流程
+    //检查档案
+    public void handleInspection(InspectionEvent event){
+        //更新inbound里指定文件的文档信息，并分配格子
 
     }
 
