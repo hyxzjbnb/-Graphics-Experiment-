@@ -330,7 +330,7 @@
     var successCount = 0;
     var failureCount = 0;
     var totalMessages = 0;
-    var expectedMessages = 0;
+    var expectedMessages = 100;
 
     // 连接到 WebSocket 服务器
     stompClient.connect({}, function (frame) {
@@ -351,6 +351,12 @@
             showMessage('分配结果', JSON.parse(message.body));
         });
         stompClient.subscribe('/topic/handleResult', function (message) {
+            showMessage('处理结果', JSON.parse(message.body));
+        });
+        stompClient.subscribe('/topic/publishOrderReceived', function (message) {
+            showMessage('订单', JSON.parse(message.body));
+        });
+        stompClient.subscribe('/topic//topic/orderResult', function (message) {
             showMessage('处理结果', JSON.parse(message.body));
         });
         stompClient.subscribe('/topic/text', function (message) {

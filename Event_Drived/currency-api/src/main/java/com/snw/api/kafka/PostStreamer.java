@@ -2,6 +2,7 @@ package com.snw.api.kafka;
 
 import com.snw.api.event.AssignmentResultEvent;
 import com.snw.api.event.GoodsArrivedEvent;
+import com.snw.api.event.OrderPostResult;
 import com.snw.api.event.PostResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -43,6 +44,21 @@ public class PostStreamer {
         }else{
 
             streamBridge.send("result-out-0", event);
+            log.info("result event sent: {}", event);
+        }
+
+    }
+
+    //发布检查情况事件
+    public void publishOrderResultEvent(String status,int time,String liftId) {
+        OrderPostResult event = new OrderPostResult(status, time,liftId);
+        // 发布分配失败事件
+        if(status == "failure"){
+            streamBridge.send("OrderResult-out-0",event);
+            log.info("result event sent: {}", event);
+        }else{
+
+            streamBridge.send("OrderResult-out-0", event);
             log.info("result event sent: {}", event);
         }
 

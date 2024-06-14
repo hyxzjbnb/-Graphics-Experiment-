@@ -2,7 +2,10 @@ package com.snw.client.kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.snw.client.event.AssignmentResultEvent;
+import com.snw.client.event.OrderPostResult;
+import com.snw.client.event.OrderReceivedEvent;
 import com.snw.client.event.PostResult;
+import com.snw.client.schedule.OutboundEventManager;
 import com.snw.client.schedule.UnloapingEventManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -29,9 +32,11 @@ public class GetStream {
 
     @Autowired
     private UnloapingEventManager unloapingEventManager; // 引入 UnloapingEventManager
+    @Autowired
+    private OutboundEventManager outboundEventManager; // 引入 UnloapingEventManager
 
     //监听的(result_0是装箱的回复事件，其他事件自己再写不一样topic的)
-    @KafkaListener(topics = {"result-out-0", "assignment-result-out-0"}, groupId = "group_id")
+    @KafkaListener(topics = {"result-out-0", "assignment-result-out-0","OrderResult-out-0"}, groupId = "group_id")
     public void listen(ConsumerRecord<String, byte[]> record) {
         try {
             String topic = record.topic();
@@ -45,7 +50,11 @@ public class GetStream {
                 AssignmentResultEvent event = objectMapper.readValue(message, AssignmentResultEvent.class);
                 handleAssignmentResult(event);
                 unloapingEventManager.handleAssignmentResult(event);
-            } else {
+            }  else if (topic.equals("OrderResult-out-0")) {
+               OrderPostResult event = objectMapper.readValue(message, OrderPostResult.class);
+               outboundEventManager.handleOrderPostResult(event);
+               handleOrderPostResult(event);
+           }else {
                 log.info("Unknown event type received: " + new String(message));
             }
         } catch (Exception e) {
@@ -62,6 +71,10 @@ public class GetStream {
     // 新增方法处理AssignmentResultEvent事件
     private void handleAssignmentResult(AssignmentResultEvent event) {
         messagingTemplate.convertAndSend("/topic/assignmentResult", event);
+        log.info("Received AssignmentResult event: " + event);
+    }
+    private void handleOrderPostResult(OrderPostResult event) {
+        messagingTemplate.convertAndSend("/topic/orderResult", event);
         log.info("Received AssignmentResult event: " + event);
     }
 }

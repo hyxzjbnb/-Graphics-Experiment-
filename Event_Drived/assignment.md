@@ -304,40 +304,15 @@ client我理解为一个发送器拿在员工手里，api则是系统，他们�
 
 ```json
 {
-  "orderId": "ORD67890",
-  "goods": [
-    {
-      "itemId": "IT001",
-      "quantity": 20
-    }
-  ],
-  "orderTime": "2024-06-07T11:00:00Z"
+  "orderId": "ORD67890", 
+   "itemId": "IT001",
+   "quantity": 20
 }
 ```
-
+需要消费者收到信号后，检查有没有足够的库存，并检查有没有足够的lift车，有就返回好，把lift设置为在使用，并返回lift需要的时间和车号,并再outbound.json表里生成对应的出库信息，然后把库存表里的物品数量减掉
 **行为**：
 - 生产者（订单管理系统）在接收到出库订单时发布`OrderReceived`事件。
 - 消费者（出库处理服务）接收到事件后，准备货物的出库流程。
-
-#### GoodsLoadingStarted
-
-- **生产者**：出库处理服务发布此事件。
-- **消费者**：状态管理器监听此事件，记录装载开始时间并更新货物状态。
-
-```json
-{
-  "orderId": "ORD67890",
-  "shipmentId": "SH12345",
-  "warehouseId": "WH001",
-  "startTime": "2024-06-07T11:10:00Z"
-}
-```
-
-**行为**：
-- 生产者（出库处理服务）在开始装载货物时发布`GoodsLoadingStarted`事件。
-
-
-- 消费者（状态管理器）接收到事件后，记录装载开始时间并更新货物状态。
 
 #### GoodsShipped
 
@@ -347,9 +322,7 @@ client我理解为一个发送器拿在员工手里，api则是系统，他们�
 ```json
 {
   "orderId": "ORD67890",
-  "shipmentId": "SH12345",
-  "warehouseId": "WH001",
-  "shipTime": "2024-06-07T11:30:00Z"
+  "warehouseId": "WH001"
 }
 ```
 

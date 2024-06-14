@@ -1,10 +1,7 @@
 package com.snw.client.kafka;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.snw.client.event.GoodsArrivedEvent;
-import com.snw.client.event.InspectionEvent;
-import com.snw.client.event.UnloadingCompletedEvent;
-import com.snw.client.event.UnloadingStartedEvent;
+import com.snw.client.event.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,5 +60,22 @@ public class PostStream {
         streamBridge.send("inspection-documents-topic", event);
         log.info("Inspection event sent: {}", event);
     }
+
+    //开始出库流程的编写
+    public void publishOrderReceived(OrderReceivedEvent event){
+        streamBridge.send("order-received",event);
+        log.info("OrderReceived event sent: {}", event);
+    }
+    //发布开始出库结束，然后派车前来
+    public void PublishGoodsShipped(GoodsShippedEvent event){
+        streamBridge.send("deliver—begin",event);
+        log.info("出库结束: {}", "");
+    }
+    //发布出库运输开始
+    public void publishOrderdeliver(){
+        streamBridge.send("order—finish","");
+        log.info("出库结束: {}", "");
+    }
+
 
 }
