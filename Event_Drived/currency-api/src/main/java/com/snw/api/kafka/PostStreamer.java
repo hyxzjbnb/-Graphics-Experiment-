@@ -1,9 +1,6 @@
 package com.snw.api.kafka;
 
-import com.snw.api.event.AssignmentResultEvent;
-import com.snw.api.event.GoodsArrivedEvent;
-import com.snw.api.event.OrderPostResult;
-import com.snw.api.event.PostResult;
+import com.snw.api.event.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cloud.stream.function.StreamBridge;
@@ -63,5 +60,24 @@ public class PostStreamer {
         }
 
     }
+    // 发布InspectionCompleted事件
+    public void publishInspectionCompletedEvent(InspectionCompletedEvent event) {
+        streamBridge.send("inspection-completed-out-0", event);
+        log.info("Inspection completed event sent: {}", event);
+    }
 
+    // 新增发布 StorageLocationAllocatedEvent 事件的方法
+    public void publishStorageLocationAllocatedEvent(StorageLocationAllocatedEvent event) {
+        streamBridge.send("storage-location-allocated-out-0", event);
+        log.info("Storage location allocated event sent: {}", event);
+    }
+
+    public void publishStorageStartedEvent(StorageStartedEvent event) {
+        streamBridge.send("storage-started-out-0", event);
+        log.info("Storage started event sent: {}", event);
+    }
+    public void publishStorageCompletedEvent(StorageCompletedEvent event) {
+        streamBridge.send("storage-completed-out-0", event);
+        log.info("Storage completed event sent: {}", event);
+    }
 }
