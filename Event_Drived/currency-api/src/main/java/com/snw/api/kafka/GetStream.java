@@ -44,6 +44,8 @@ public class GetStream {
     private OutboundService outboundService;
     @Autowired
     private liftService liftService;
+    @Autowired
+    private StorageService storageService;
 
     @KafkaListener(topics = {"goods-arrived-out-0", "unloading-started-out-0", "unloading-completed-out-0", "inspection-documents-topic", "order-received","deliver-begin","deliver-finish"}, groupId = "warehouse")
     public void listen(ConsumerRecord<String, byte[]> record) {
@@ -271,5 +273,23 @@ public class GetStream {
         log.info("Handling InspectionEvent: {}", event);
         // 在这里实现你的文档检查和更新逻辑
     }
+//    // 入库流程：处理检查完成事件
+//    private void handleInspectionCompleted(InspectionCompletedEvent event) {
+//        log.info("Handling InspectionCompletedEvent: {}", event);
+//        inventoryService.addInventory(event);
+//    }
+//
+//    private void handleStorageLocationAllocated(StorageLocationAllocatedEvent event) {
+//        log.info("Handling StorageLocationAllocatedEvent: {}", event);
+//        storageService.allocateStorageLocation(event);
+//        ObjectNode response = objectMapper.createObjectNode();
+//        response.put("status", "success");
+//        log.info("Storage location allocated successfully");
+//    }
+//
+//    private void handleStorageStarted(StorageStartedEvent event) {
+//        log.info("Handling StorageStartedEvent: {}", event);
+//        liftService.handleStorageStarted(event);
+//    }
 
 }

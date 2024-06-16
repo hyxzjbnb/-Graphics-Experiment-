@@ -19,6 +19,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class VehicleService {
@@ -193,5 +194,17 @@ public class VehicleService {
             log.error("Error reading vehicles data", e);
         }
         return null;
+    }
+    // 计算欧几里得距离
+    public double calculateDistance(Map<String, Integer> startLocation, Map<String, Integer> endLocation) {
+        int dx = endLocation.get("x") - startLocation.get("x");
+        int dy = endLocation.get("y") - startLocation.get("y");
+        int dz = endLocation.get("z") - startLocation.get("z");
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+
+    // 计算车辆的运输时间
+    public int calculateTravelTime(double distance, int speed) {
+        return (int) Math.ceil(distance / speed);
     }
 }
