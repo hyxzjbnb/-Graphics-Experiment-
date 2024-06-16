@@ -97,6 +97,8 @@ public class GetStream {
             if(b!=null){
                 try {// 减少库存
                     inventoryService.decreaseStock(itemId, quantity);
+                    //增加仓库容量
+                    warehouseService.addWarehouseCapacity(a.get("location").asText(),quantity);
                     // 生成出库信息
                     JsonNode location = a.get("warehouseLocation");
                     log.info(a.get("shipmentId").asText());
