@@ -2,12 +2,9 @@ package com.snw.api.kafka;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.snw.api.event.GoodsArrivedEvent;
-import com.snw.api.event.InspectionEvent;
-import com.snw.api.event.OrderReceivedEvent;
-import com.snw.api.event.UnloadingCompletedEvent;
-import com.snw.api.event.UnloadingStartedEvent;
+import com.snw.api.event.*;
 import com.snw.api.service.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -48,7 +45,7 @@ public class GetStream {
     @Autowired
     private liftService liftService;
 
-    @KafkaListener(topics = {"goods-arrived-out-0", "unloading-started-out-0", "unloading-completed-out-0", "inspection-documents-topic", "order-received"}, groupId = "warehouse")
+    @KafkaListener(topics = {"goods-arrived-out-0", "unloading-started-out-0", "unloading-completed-out-0", "inspection-documents-topic", "order-received","deliver-begin","deliver-finish"}, groupId = "warehouse")
     public void listen(ConsumerRecord<String, byte[]> record) {
         try {
             String topic = record.topic();
@@ -69,7 +66,13 @@ public class GetStream {
             } else if (topic.equals("order-received")) {
                 OrderReceivedEvent event = objectMapper.readValue(message, OrderReceivedEvent.class);
                 handleOrderReceived(event);
-            } else {
+            } else if (topic.equals("deliver-begin")) {
+                GoodsShippedEvent event = objectMapper.readValue(message, GoodsShippedEvent.class);
+                handleGoodsShipped(event);
+            }else if (topic.equals("deliver-finish")) {
+                GoodsShippedCompleteEvent event = objectMapper.readValue(message, GoodsShippedCompleteEvent.class);
+                handleGoodsShippedComplete(event);
+            }else {
                 log.info("Unknown event type received: " + new String(message));
             }
         } catch (Exception e) {
@@ -127,6 +130,83 @@ public class GetStream {
             streamer.publishOrderResultEvent("failure",0,null);
             log.warn("Not enough stock for order: {}", orderId);
         }
+    }
+    //处理出库运输事件
+    public void handleGoodsShipped(GoodsShippedEvent event) {
+        String liftId = event.getLiftId();
+
+        //升降机恢复空闲
+        liftService.updateLiftStatus(liftId,"idle");
+        // 1. 查找升降机的location
+        ObjectNode lift = liftService.getLiftById(liftId);
+        if (lift == null) {
+            streamer.publishOrderResultEvent("failure",0,null);
+            System.out.println("No lift found with ID: " + liftId);
+            return;
+        }
+        String location = lift.get("location").asText();
+
+        // 2. 查找指定location的空闲车辆
+        ObjectNode vehicle = findIdleVehicleAtLocation(location);
+        if (vehicle == null) {
+            streamer.publishOrderResultEvent("failure",0,null);
+            System.out.println("No idle vehicle found at location: " + location);
+            return;
+        }
+
+        // 3. 更新车辆状态为in_use
+        String vehicleId = vehicle.get("id").asText();
+        vehicleService.updateVehicleStatus(vehicleId, "in_use");
+
+        // 4. 查找location到目标点的距离
+        int distance = warehouseService.getWarehouseById(location).get("distanceFromLogisticPoint").asInt();
+
+        // 5. 根据车辆的速度计算时间
+        double speed = vehicle.get("speed").asDouble();
+        int transportTime = calculateTransportTime(distance, speed);
+
+        // 6. 返回完成时间和车辆
+        saveTransportTime(event.getOrderId(), transportTime);
+        streamer.publishOrderResultEvent("success",transportTime,vehicle.get("id").asText());
+    }
+
+    //处理出库完成
+    public void handleGoodsShippedComplete(GoodsShippedCompleteEvent event){
+        // 1. 更新车辆状态为idle
+        String vehicleId = event.getVehicleId();
+        vehicleService.updateVehicleStatus(vehicleId, "idle");
+        //2.更新outbound状态为down
+        outboundService.updateOutboundStatusToDown(event.getOrderId());
+        streamer.publishOrderResultEvent("success",0,event.getVehicleId());
+    }
+
+    // 查找指定location的空闲车辆
+    private ObjectNode findIdleVehicleAtLocation(String location) {
+        ArrayNode allVehicles = vehicleService.getAllVehicles();
+        for (JsonNode node : allVehicles) {
+            if (node instanceof ObjectNode) {
+                ObjectNode vehicle = (ObjectNode) node;
+                if ("idle".equals(vehicle.get("status").asText()) && location.equals(vehicle.get("location").asText())) {
+                    return vehicle;
+                }
+            }
+        }
+        return null;
+    }
+
+    // 根据距离和速度计算运输时间
+    private int calculateTransportTime(double distance, double speed) {
+        if (speed <= 0) {
+            throw new IllegalArgumentException("Speed must be greater than zero");
+        }
+        int time = (int)(distance / speed);
+        return time; // 时间 = 距离 / 速度
+    }
+
+    // 保存运输时间（假设实现）
+    private void saveTransportTime(String orderId, double transportTime) {
+        // 这里假设有一个方法来保存运输时间
+        System.out.println("Order " + orderId + ": Transport time is " + transportTime + " hours.");
     }
 
     //处理卸货开始

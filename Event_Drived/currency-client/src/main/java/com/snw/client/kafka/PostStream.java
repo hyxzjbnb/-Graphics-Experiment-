@@ -68,12 +68,12 @@ public class PostStream {
     }
     //发布开始出库结束，然后派车前来
     public void PublishGoodsShipped(GoodsShippedEvent event){
-        streamBridge.send("deliver—begin",event);
-        log.info("出库结束: {}", "");
+        streamBridge.send("deliver-begin",event);
+        log.info("出库结束: {}", event);
     }
-    //发布出库运输开始
+    //发布出库运输完成
     public void publishOrderdeliver(){
-        streamBridge.send("order—finish","");
+        streamBridge.send("deliver-finish","");
         log.info("出库结束: {}", "");
     }
 

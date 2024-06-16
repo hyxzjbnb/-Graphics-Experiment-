@@ -1,1 +1,1 @@
-{"lift":[{"id":"L001","speed":1,"status":"in_use","location":"WH001"}]}
+{"lift":[{"id":"L001","speed":1,"status":"idle","location":"WH001"},{"id":"L004","status":"idle","speed":"2","location":"WH002"}]}

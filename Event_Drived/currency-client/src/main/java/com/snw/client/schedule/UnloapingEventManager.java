@@ -121,7 +121,7 @@ public class UnloapingEventManager {
             messagingTemplate.convertAndSend("/topic/unloadingCompleted", event);
             streamBridge.send(topic, event);
             log.info("UnloadingCompleted event sent: {}", event);
-            //messagingTemplate.convertAndSend("/topic/text", "卸货完成，总耗费事件"+TypedelayMillis);
+            messagingTemplate.convertAndSend("/topic/text", "卸货完成，总耗费事件"+TypedelayMillis);
             // 对于卸货完成事件，不需要等待 success 回复，可以直接结束流程
 
         } else {

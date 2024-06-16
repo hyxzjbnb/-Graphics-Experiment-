@@ -5,26 +5,110 @@
     <title>Kafka 事件查看器 & 车辆信息</title>
     <!-- 引入 Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 自定义样式 -->
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+            font-family: 'Microsoft YaHei', sans-serif;
+            margin: 0;
+            background-color: #1b2a38;
+            color: #ecf0f1;
         }
-        .card-header, .card-body, .modal-body {
-            color: #2c3e50;
+
+        .container-fluid {
+            padding: 20px;
         }
-        .message, .vehicle-info {
+
+        .card {
+            background-color: #2c3e50;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        .card-header {
+            background-color: #34495e;
+            color: #ecf0f1;
+            border-bottom: none;
+            border-radius: 10px 10px 0 0;
+            padding: 15px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .card-footer {
+            background-color: #34495e;
+            border-top: none;
+            border-radius: 0 0 10px 10px;
             padding: 10px;
-            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        .card-footer .btn {
+            margin: 5px;
+        }
+
+        .btn {
+            background-color: #3498db;
+            border: none;
+            color: #ecf0f1;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: #2980b9;
+        }
+
+        .modal-content {
+            background-color: #2c3e50;
+            border: none;
+        }
+
+        .modal-header, .modal-footer {
+            border-bottom: none;
+            border-top: none;
+            background-color: #34495e;
+            color: #ecf0f1;
+        }
+
+        .modal-body {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+        }
+
+        .form-control {
+            background-color: #34495e;
+            border: none;
+            color: #ecf0f1;
+        }
+
+        .form-control:focus {
+            background-color: #34495e;
+            border: 1px solid #2980b9;
+            box-shadow: none;
+        }
+
+        .message, .vehicle-info {
+            padding: 15px;
+            border: 1px solid #2980b9;
             margin: 10px 0;
-            border-radius: 4px;
-            background-color: #e0f7fa;
+            border-radius: 10px;
+            background-color: #34495e;
         }
-        .modal-footer button {
-            width: 48%;
-        }
+
         #status {
             margin-top: 10px;
+        }
+
+        h3, h4 {
+            color: #ecf0f1;
         }
     </style>
 </head>
@@ -45,20 +129,20 @@
         </div>
         <!-- 右边的控制区域 -->
         <div class="col-md-8">
-                <div class="card mb-3">
-                    <div class="card-header">
-                        <h3>仓库信息</h3>
-                        <button class="btn btn-primary btn-sm" onclick="fetchWarehouses()">刷新仓库信息</button>
-                    </div>
-                    <div class="card-body" id="warehouseList">
-                        <h4>仓库:</h4>
-                    </div>
-                    <div class="card-footer">
-                        <button class="btn btn-success" onclick="$('#addWarehouseModal').modal('show')">添加新仓库</button>
-                        <button class="btn btn-warning" onclick="$('#updateWarehouseModal').modal('show')">更新仓库容量和大小</button>
-                        <button class="btn btn-danger" onclick="$('#deleteWarehouseModal').modal('show')">删除仓库</button>
-                    </div>
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h3>仓库信息</h3>
+                    <button class="btn btn-primary btn-sm" onclick="fetchWarehouses()">刷新仓库信息</button>
                 </div>
+                <div class="card-body" id="warehouseList">
+                    <h4>仓库:</h4>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-success" onclick="$('#addWarehouseModal').modal('show')">添加新仓库</button>
+                    <button class="btn btn-warning" onclick="$('#updateWarehouseModal').modal('show')">更新仓库容量和大小</button>
+                    <button class="btn btn-danger" onclick="$('#deleteWarehouseModal').modal('show')">删除仓库</button>
+                </div>
+            </div>
             <div class="card mb-3">
                 <div class="card-header">
                     <h3>车辆信息</h3>
@@ -70,12 +154,30 @@
                 <div class="card-footer">
                     <button class="btn btn-success" onclick="$('#addVehicleModal').modal('show')">添加新车辆</button>
                     <button class="btn btn-warning" onclick="$('#updateSpeedModal').modal('show')">更新车辆速度</button>
-                    <button class="btn btn-warning" onclick="$('#cancleSpeedModal').modal('show')">删除指定车辆</button>
+                    <button class="btn btn-danger" onclick="$('#cancleSpeedModal').modal('show')">删除指定车辆</button>
+                </div>
+            </div>
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h3>升降机信息</h3>
+                    <button class="btn btn-primary btn-sm" onclick="fetchLift()">刷新升降机信息</button>
+                </div>
+                <div class="card-body" id="liftList">
+                    <h4>车辆:</h4>
+                </div>
+                <div class="card-footer">
+                    <button class="btn btn-success" onclick="$('#addLiftModal').modal('show')">添加新升降机</button>
+                    <button class="btn btn-danger" onclick="$('#cancleLiftSpeedModal').modal('show')">删除指定车辆</button>
                 </div>
             </div>
             <div class="card">
                 <div class="card-header">
                     <h3>事件调度器</h3>
+                    <div id="processResult1">
+                        <h4>过程结果:</h4>
+                        <p id="resultText1"></p>
+                    </div>
+                    <button class="btn btn-info btn-sm" onclick="$('#triggerOutboundEventModal').modal('show')">设置出库事件</button>
                 </div>
                 <div class="card-body">
                     <div id="processResult">
@@ -100,6 +202,45 @@
         </div>
     </div>
 </div>
+
+<!-- 触发出库事件模态框 -->
+<div class="modal fade" id="triggerOutboundEventModal" tabindex="-1" role="dialog" aria-labelledby="triggerOutboundEventModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="triggerOutboundEventModalLabel">设置出库事件</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="triggerOutboundEventForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="outboundItemId">物品ID:</label>
+                        <input type="text" class="form-control" id="outboundItemId" name="outboundItemId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="outboundQuantity">数量:</label>
+                        <input type="number" class="form-control" id="outboundQuantity" name="outboundQuantity" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="outboundPublishCount">发布次数:</label>
+                        <input type="number" class="form-control" id="outboundPublishCount" name="outboundPublishCount" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="outboundInterval">发布间隔（毫秒）:</label>
+                        <input type="number" class="form-control" id="outboundInterval" name="outboundInterval" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">触发事件</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- 添加新仓库模态框 -->
 <div class="modal fade" id="addWarehouseModal" tabindex="-1" role="dialog" aria-labelledby="addWarehouseModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -147,6 +288,7 @@
         </div>
     </div>
 </div>
+
 <!-- 更新仓库容量和尺寸模态框 -->
 <div class="modal fade" id="updateWarehouseModal" tabindex="-1" role="dialog" aria-labelledby="updateWarehouseModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -190,6 +332,7 @@
         </div>
     </div>
 </div>
+
 <!-- 添加新车辆模态框 -->
 <div class="modal fade" id="addVehicleModal" tabindex="-1" role="dialog" aria-labelledby="addVehicleModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -222,6 +365,10 @@
                         <label for="vehicleSpeed">速度:</label>
                         <input type="text" class="form-control" id="vehicleSpeed" name="vehicleSpeed" required>
                     </div>
+                    <div class="form-group">
+                        <label for="vehicleLocation">位置:</label>
+                        <input type="text" class="form-control" id="vehicleLocation" name="vehicleLocation" required>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="submit" class="btn btn-primary">添加</button>
@@ -231,7 +378,39 @@
         </div>
     </div>
 </div>
-
+<!-- 添加新车辆模态框 -->
+<div class="modal fade" id="addLiftModal" tabindex="-1" role="dialog" aria-labelledby="addVehicleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addLiftModalLabel">添加新车辆</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="addLiftForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="vehicleId">车辆ID:</label>
+                        <input type="text" class="form-control" id="liftId" name="vehicleId" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vehicleSpeed">速度:</label>
+                        <input type="text" class="form-control" id="liftSpeed" name="vehicleSpeed" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="vehicleLocation">位置:</label>
+                        <input type="text" class="form-control" id="liftLocation" name="vehicleLocation" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">添加</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 <!-- 更新车辆速度模态框 -->
 <div class="modal fade" id="updateSpeedModal" tabindex="-1" role="dialog" aria-labelledby="updateSpeedModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -262,8 +441,8 @@
     </div>
 </div>
 
-<!-- 更新车辆速度模态框 -->
-<div class="modal fade" id="cancleSpeedModal" tabindex="-1" role="dialog" aria-labelledby="updateSpeedModalLabel" aria-hidden="true">
+<!-- 删除车辆模态框 -->
+<div class="modal fade" id="cancleSpeedModal" tabindex="-1" role="dialog" aria-labelledby="cancleSpeedModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
             <div class="modal-header">
@@ -275,18 +454,45 @@
             <form id="cancleSpeedModalForm">
                 <div class="modal-body">
                     <div class="form-group">
-                        <label for="updateVehicleId">车辆ID:</label>
-                        <input type="text" class="form-control" id="cancleVehicleId" name="updateVehicleId" required>
+                        <label for="cancleVehicleId">车辆ID:</label>
+                        <input type="text" class="form-control" id="cancleVehicleId" name="cancleVehicleId" required>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="submit" class="btn btn-primary">删除</button>
+                    <button type="submit" class="btn btn-danger">删除</button>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
+
+<!-- 删除车辆模态框 -->
+<div class="modal fade" id="cancleLiftSpeedModal" tabindex="-1" role="dialog" aria-labelledby="cancleSpeedModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cancleLiftSpeedModalLabel">删除车辆</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="cancleLiftSpeedModalForm">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="cancleVehicleId">车辆ID:</label>
+                        <input type="text" class="form-control" id="cancleLiftId" name="cancleVehicleId" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger">删除</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 <!-- 删除仓库模态框 -->
 <div class="modal fade" id="deleteWarehouseModal" tabindex="-1" role="dialog" aria-labelledby="deleteWarehouseModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
@@ -331,6 +537,11 @@
     var failureCount = 0;
     var totalMessages = 0;
     var expectedMessages = 100;
+    var expectedMessages1 = 100;
+    var failureCount1 = 0;
+    var totalMessages1 = 0;
+    var startTime1;
+    var flag1 = 0;
 
     // 连接到 WebSocket 服务器
     stompClient.connect({}, function (frame) {
@@ -339,12 +550,13 @@
         // 订阅主题
         stompClient.subscribe('/topic/goodsArrived', function (message) {
             showMessage('货物已到达', JSON.parse(message.body));
-            totalMessages++;
         });
         stompClient.subscribe('/topic/unloadingStarted', function (message) {
             showMessage('卸货已开始', JSON.parse(message.body));
         });
         stompClient.subscribe('/topic/unloadingCompleted', function (message) {
+            totalMessages++;
+            console.log(totalMessages)
             showMessage('卸货已完成', JSON.parse(message.body));
         });
         stompClient.subscribe('/topic/assignmentResult', function (message) {
@@ -356,7 +568,11 @@
         stompClient.subscribe('/topic/publishOrderReceived', function (message) {
             showMessage('订单', JSON.parse(message.body));
         });
-        stompClient.subscribe('/topic//topic/orderResult', function (message) {
+        stompClient.subscribe('/topic/publishOrderComplete', function (message) {
+            totalMessages1++;
+            showMessage('订单完成', JSON.parse(message.body));
+        });
+        stompClient.subscribe('/topic/orderResult', function (message) {
             showMessage('处理结果', JSON.parse(message.body));
         });
         stompClient.subscribe('/topic/text', function (message) {
@@ -366,17 +582,31 @@
             // 检查消息是否包含操作失败的信息
             if (msg.includes("操作失败")) {
                 failureCount++;
+                failureCount1++;
             } else if (msg.includes("成功")) {
                 successCount++;
             }
-
+            // 检查消息是否包含操作失败的信息
+            if (msg.includes("卸货已完成")) {
+                totalMessages++;
+            }
+            console.log(totalMessages+failureCount)
             // 当收到的消息数达到预期的消息数时，计算结果
-            if (totalMessages >= expectedMessages && flag == 0) {
+            if ((totalMessages+failureCount) >= expectedMessages && flag == 0) {
                 flag = 1;
                 let endTime = new Date().getTime();
                 let duration = (endTime - startTime) / 1000; // 持续时间（秒）
                 let successRate = ((expectedMessages - failureCount) / expectedMessages) * 100; // 成功率
                 document.getElementById('resultText').textContent = `过程完成。持续时间: ${duration}秒，成功率: ${successRate.toFixed(2)}%`;
+            }
+
+            // 当收到的消息数达到预期的消息数时，计算结果
+            if ((totalMessages1+failureCount1)>= expectedMessages1 && flag1 == 0) {
+                flag1 = 1;
+                let endTime = new Date().getTime();
+                let duration = (endTime - startTime1) / 1000; // 持续时间（秒）
+                let successRate = ((expectedMessages1 - failureCount1) / expectedMessages1) * 100; // 成功率
+                document.getElementById('resultText1').textContent = `过程完成。持续时间: ${duration}秒，成功率: ${successRate.toFixed(2)}%`;
             }
         });
     });
@@ -419,7 +649,33 @@
                 vehicleElement.innerHTML = `
                         <strong>ID:</strong> ${vehicle.id}<br>
                         <strong>速度:</strong> ${vehicle.speed || '未定义'}<br>
-                        <strong>状态:</strong> ${vehicle.status}
+                        <strong>状态:</strong> ${vehicle.status}<br>
+                        <strong>位置:</strong> ${vehicle.location}
+                    `;
+                vehicleListDiv.appendChild(vehicleElement);
+            });
+        } catch (error) {
+            console.error('获取车辆信息时出错:', error);
+        }
+    }
+
+    // 获取升降机信息 JavaScript
+    async function fetchLift() {
+        try {
+            const response = await fetch('http://localhost:8082/api/lift/all');
+            const vehicles = await response.json();
+
+            var vehicleListDiv = document.getElementById('liftList');
+            vehicleListDiv.innerHTML = '<h4>车辆:</h4>'; // 清除现有内容
+
+            vehicles.forEach(vehicle => {
+                var vehicleElement = document.createElement('div');
+                vehicleElement.className = 'vehicle-info';
+                vehicleElement.innerHTML = `
+                        <strong>ID:</strong> ${vehicle.id}<br>
+                        <strong>速度:</strong> ${vehicle.speed || '未定义'}<br>
+                        <strong>状态:</strong> ${vehicle.status}<br>
+                         <strong>位置:</strong> ${vehicle.location}
                     `;
                 vehicleListDiv.appendChild(vehicleElement);
             });
@@ -434,10 +690,11 @@
 
         const vehicle = {
             id: document.getElementById('vehicleId').value,
-            status: document.getElementById('vehicleStatus').value,
+            status: "idle",
             type: document.getElementById('vehicleType').value,
             model: document.getElementById('vehicleModel').value,
-            speed: document.getElementById('vehicleSpeed').value
+            speed: document.getElementById('vehicleSpeed').value,
+            location:document.getElementById('vehicleLocation').value
         };
 
         try {
@@ -453,6 +710,37 @@
                 alert('车辆添加成功！');
                 fetchVehicles(); // 刷新车辆列表
                 $('#addVehicleModal').modal('hide');
+            } else {
+                alert('添加车辆失败');
+            }
+        } catch (error) {
+            console.error('添加车辆时出错:', error);
+        }
+    }
+    // 添加新车辆
+    async function addLift(event) {
+        event.preventDefault();
+
+        const vehicle = {
+            id: document.getElementById('liftId').value,
+            status: "idle",
+            speed: document.getElementById('liftSpeed').value,
+            location:document.getElementById('liftLocation').value
+        };
+
+        try {
+            const response = await fetch('http://localhost:8082/api/lift/add', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(vehicle)
+            });
+
+            if (response.ok) {
+                alert('车辆添加成功！');
+                fetchLift(); // 刷新车辆列表
+                $('#addLiftModal').modal('hide');
             } else {
                 alert('添加车辆失败');
             }
@@ -534,7 +822,41 @@
             console.error('车辆删除出错:', error);
         }
     }
+    // 删除车辆速度
+    async function cancleLiftSpeedModal(event) {
+        event.preventDefault();
 
+        const vehicleId = document.getElementById('cancleLiftId').value;
+
+        // 获取现有车辆详细信息，更新速度，并发送 PUT 请求
+        try {
+            const response = await fetch('http://localhost:8082/api/lift/all');
+            const vehicles = await response.json();
+            const vehicle = vehicles.find(v => v.id === vehicleId);
+
+            if (vehicle) {
+                const updateResponse = await fetch(`http://localhost:8082/api/lift/delete/${vehicleId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(vehicle)
+                });
+
+                if (updateResponse.ok) {
+                    alert('车辆删除成功！');
+                    fetchLift(); // 刷新车辆列表
+                    $('#cancleLiftSpeedModal').modal('hide');
+                } else {
+                    alert('车辆删除失败');
+                }
+            } else {
+                alert('未找到车辆');
+            }
+        } catch (error) {
+            console.error('车辆删除出错:', error);
+        }
+    }
     // 开始卸货过程
     async function startUnloadingProcess() {
         const goodsQuantity = document.getElementById('goodsQuantity').value;
@@ -546,6 +868,7 @@
         totalMessages = 0;
         flag = 0;
         expectedMessages = publishCount; // 我们期望接收到的总消息数等于发布的次数
+        console.log(expectedMessages)
         startTime = new Date().getTime();
 
         document.getElementById('resultText').textContent = '卸货过程开始...';
@@ -715,7 +1038,76 @@
             console.error('删除仓库时出错:', error);
         }
     }
+    // 触发出库事件
+    // 生成 UUID 函数
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
 
+    // 触发出库事件
+    async function triggerOutboundEvent(event) {
+        event.preventDefault();
+
+        const itemId = document.getElementById('outboundItemId').value;
+        const quantity = document.getElementById('outboundQuantity').value;
+        const publishCount = document.getElementById('outboundPublishCount').value;
+        const interval = document.getElementById('outboundInterval').value;
+        failureCount1 = 0;
+        totalMessages1 = 0;
+        flag1 = 0;
+        expectedMessages1 = publishCount; // 我们期望接收到的总消息数等于发布的次数
+        startTime1 = new Date().getTime();
+        document.getElementById('resultText1').textContent = '出库过程开始...';
+
+        for (let i = 0; i < parseInt(publishCount); i++) {
+            const orderId = generateUUID();
+
+            const outboundEvent = {
+                orderId: orderId,
+                itemId: itemId,
+                quantity: parseInt(quantity)
+            };
+
+            try {
+                const response = await fetch('http://localhost:8003/outbound/order_receive', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(outboundEvent)
+                });
+
+                if (response.ok) {
+                    console.log(`第 ${i + 1} 次出库事件触发成功`);
+                } else {
+                    console.error(`第 ${i + 1} 次触发出库事件失败`);
+                }
+
+                if (i < parseInt(publishCount) - 1) {
+                    await new Promise(resolve => setTimeout(resolve, parseInt(interval)));
+                }
+            } catch (error) {
+                console.error('触发出库事件时出错:', error);
+                alert('触发出库事件时出错');
+            }
+        }
+
+        alert('所有出库事件触发完成！');
+        $('#triggerOutboundEventModal').modal('hide');
+    }
+
+    document.getElementById('addLiftForm').addEventListener('submit', addLift);
+    document.getElementById('cancleLiftSpeedModalForm').addEventListener('submit', cancleLiftSpeedModal);
+
+    // 添加表单事件监听器
+    document.getElementById('triggerOutboundEventForm').addEventListener('submit', triggerOutboundEvent);
+
+
+    // 添加表单事件监听器
+    document.getElementById('triggerOutboundEventForm').addEventListener('submit', triggerOutboundEvent);
     // 表单事件监听器
     document.getElementById('deleteWarehouseForm').addEventListener('submit', deleteWarehouse);
 

@@ -56,22 +56,80 @@ public class OutboundEventManager {
                     if (nextEventInfo.isSuccess()) {
                         long delayMillis = nextEventInfo.getTime() * 6 * 100; // 计算延迟时间（单位为毫秒）
                         TypedelayMillis = delayMillis;
-                        messagingTemplate.convertAndSend("/topic/text", "需要等待" + delayMillis + "毫秒车才来");
+                        messagingTemplate.convertAndSend("/topic/text", "需要等待" + delayMillis + "完成出库");
                         log.info("Scheduling UnloadingStartedEvent with delay: {} milliseconds", delayMillis);
                         log.info("Scheduling UnloadingStartedEvent with delay: {} milliseconds", nextEventInfo.getVehicleId());
-
                         // 调度卸货开始事件
                         scheduleNextEvent(
-                                new UnloadingStartedEvent(
-                                        ((GoodsArrivedEvent) event).getShipmentId(),
-                                        ((GoodsArrivedEvent) event).getWarehouseId(),
-                                        nextEventInfo.getTimestamp(),
+                                new GoodsShippedEvent(
+                                        ((OrderReceivedEvent) event).getOrderId(),
                                         nextEventInfo.getVehicleId()
                                 ),
                                 delayMillis
                         );
                     }else{
                         messagingTemplate.convertAndSend("/topic/text", "1操作失败");
+                    }
+                }
+            });
+        } else if (event instanceof GoodsShippedEvent) {
+            // 处理商品到达事件
+            messagingTemplate.convertAndSend("/topic/publishOrderReceived", event);
+
+            // 等待分配结果并处理
+            CompletableFuture<NextEventInfo> nextEventFuture = waitForNextEventInfo("OrderResult-out-0", event, topic);
+
+            // 设置超时处理
+            CompletableFuture<NextEventInfo> timeoutFuture = failAfterTimeout(10, TimeUnit.SECONDS);
+
+            CompletableFuture.anyOf(nextEventFuture, timeoutFuture).thenAccept(result -> {
+                if (result == timeoutFuture) {
+                    // 处理超时情况
+                    messagingTemplate.convertAndSend("/topic/text", "等待超时，操作失败");
+                    log.info("Operation failed due to timeout.");
+                } else {
+                    NextEventInfo nextEventInfo = (NextEventInfo) result;
+                    if (nextEventInfo.isSuccess()) {
+                        long delayMillis = nextEventInfo.getTime() * 6 * 100; // 计算延迟时间（单位为毫秒）
+                        TypedelayMillis = delayMillis;
+                        messagingTemplate.convertAndSend("/topic/text", "需要等待" + delayMillis + "运送到出库点");
+                        log.info("Scheduling UnloadingStartedEvent with delay: {} milliseconds", delayMillis);
+                        log.info("Scheduling UnloadingStartedEvent with delay: {} milliseconds", nextEventInfo.getVehicleId());
+                        // 调度出库完成事件
+                        scheduleNextEvent(
+                                new GoodsShippedCompleteEvent(
+                                        ((GoodsShippedEvent) event).getOrderId(),
+                                        nextEventInfo.getVehicleId()
+                                ),
+                                delayMillis
+                        );
+                    }else{
+                        messagingTemplate.convertAndSend("/topic/text", "2操作失败");
+                    }
+                }
+            });
+        }  else if (event instanceof GoodsShippedCompleteEvent) {
+            // 处理商品到达事件
+            messagingTemplate.convertAndSend("/topic/publishOrderComplete", event);
+            messagingTemplate.convertAndSend("/topic/text", "订单完成");
+
+            // 等待分配结果并处理
+            CompletableFuture<NextEventInfo> nextEventFuture = waitForNextEventInfo("OrderResult-out-0", event, topic);
+
+            // 设置超时处理
+            CompletableFuture<NextEventInfo> timeoutFuture = failAfterTimeout(10, TimeUnit.SECONDS);
+
+            CompletableFuture.anyOf(nextEventFuture, timeoutFuture).thenAccept(result -> {
+                if (result == timeoutFuture) {
+                    // 处理超时情况
+                    messagingTemplate.convertAndSend("/topic/text", "等待超时，操作失败");
+                    log.info("Operation failed due to timeout.");
+                } else {
+                    NextEventInfo nextEventInfo = (NextEventInfo) result;
+                    if (nextEventInfo.isSuccess()) {
+                        messagingTemplate.convertAndSend("/topic/text", "出库结束");
+                    }else{
+                        messagingTemplate.convertAndSend("/topic/text", "3操作失败");
                     }
                 }
             });
@@ -116,10 +174,10 @@ public class OutboundEventManager {
     private String determineTopic(Object event) {
         if (event instanceof OrderReceivedEvent) {
             return "order-received";
-        } else if (event instanceof UnloadingStartedEvent) {
-            return "unloading-started-out-0";
-        } else if (event instanceof UnloadingCompletedEvent) {
-            return "unloading-completed-out-0";
+        } else if (event instanceof GoodsShippedEvent) {
+            return "deliver-begin";
+        } else if (event instanceof GoodsShippedCompleteEvent) {
+            return "deliver-finish";
         } else {
             return "unknown-topic";
         }

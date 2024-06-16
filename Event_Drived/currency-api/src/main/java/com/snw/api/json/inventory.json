@@ -1,1 +1,1 @@
-{"inventory":[{"id":"IV001","shipmentId":"SH12345","itemId":"IT001","quantity":9840,"documents":{"invoice":"INV12345","billOfLading":"BL12345","warranty":"WT12345"},"status":"stored","location":"WH001","warehouseLocation":{"x":2,"y":3,"z":1},"creationTime":"2024-06-07T10:30:00Z"}]}
+{"inventory":[{"id":"IV001","shipmentId":"SH12345","itemId":"IT001","quantity":9660,"documents":{"invoice":"INV12345","billOfLading":"BL12345","warranty":"WT12345"},"status":"stored","location":"WH001","warehouseLocation":{"x":2,"y":3,"z":1},"creationTime":"2024-06-07T10:30:00Z"}]}

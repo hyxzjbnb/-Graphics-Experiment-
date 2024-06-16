@@ -1,4 +1,4 @@
-package com.snw.client.event;
+package com.snw.api.event;
 
 import lombok.*;
 
@@ -13,9 +13,4 @@ import lombok.*;
 public class GoodsShippedEvent {
     private String orderId;
     private String liftId;
-
-    public GoodsShippedEvent(String orderId,String liftId){
-        this.orderId = orderId;
-        this.liftId = liftId;
-    }
 }

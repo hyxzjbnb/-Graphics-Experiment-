@@ -163,4 +163,33 @@ public class WarehouseService {
             log.error("Error deleting warehouse", e);
         }
     }
+
+    // 查找指定ID的仓库信息
+    public ObjectNode getWarehouseById(String warehouseId) {
+        try {
+            File file = new File(WAREHOUSE_FILE_PATH);
+            if (!file.exists()) {
+                log.warn("Warehouse JSON file does not exist");
+                return null;
+            }
+
+            ObjectNode jsonData = (ObjectNode) objectMapper.readTree(file);
+            ArrayNode warehousesArray = (ArrayNode) jsonData.get("warehouse");
+
+            for (JsonNode node : warehousesArray) {
+                if (node instanceof ObjectNode) {
+                    ObjectNode warehouse = (ObjectNode) node;
+                    if (warehouseId.equals(warehouse.get("id").asText())) {
+                        return warehouse;
+                    }
+                }
+            }
+
+            log.warn("Warehouse with ID {} not found", warehouseId);
+            return null;
+        } catch (IOException e) {
+            log.error("Error finding warehouse by ID", e);
+            return null;
+        }
+    }
 }

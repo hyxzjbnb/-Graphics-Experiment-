@@ -3,6 +3,7 @@ package com.snw.client.controller;
 import com.snw.client.domain.GoodsArrivedRequest;
 import com.snw.client.domain.Result;
 import com.snw.client.event.GoodsArrivedEvent;
+import com.snw.client.event.GoodsShippedEvent;
 import com.snw.client.event.OrderReceivedEvent;
 import com.snw.client.kafka.PostStream;
 import com.snw.client.schedule.OutboundEventManager;
@@ -29,6 +30,16 @@ public class OutboundController {
     public Result OrderReceived(@RequestBody OrderReceivedEvent request) {
         try {
             Streamer.publishOrderReceived(request);
+            return Result.success("GoodsArrived event published successfully");
+        } catch (Exception e) {
+            return Result.error("Failed to publish GoodsArrived event").addDevMessages(e.getMessage());
+        }
+    }
+
+    @PostMapping("/goodShipped")
+    public Result goodShipped(@RequestBody GoodsShippedEvent request) {
+        try {
+            Streamer.PublishGoodsShipped(request);
             return Result.success("GoodsArrived event published successfully");
         } catch (Exception e) {
             return Result.error("Failed to publish GoodsArrived event").addDevMessages(e.getMessage());

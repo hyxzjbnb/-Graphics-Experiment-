@@ -1,1 +1,1 @@
-{"warehouse":[{"id":"WH001","availableSlots":0,"dimensions":{"x":"1","y":"2","z":"3"},"distanceFromLogisticPoint":10}]}
+{"warehouse":[{"id":"WH001","availableSlots":0,"dimensions":{"x":"2","y":"2","z":"2"},"distanceFromLogisticPoint":10},{"id":"WH002","availableSlots":800,"distanceFromLogisticPoint":"10","dimensions":{"x":"1","y":"1","z":"1"}}]}
