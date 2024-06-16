@@ -72,8 +72,8 @@ public class PostStream {
         log.info("出库结束: {}", event);
     }
     //发布出库运输完成
-    public void publishOrderdeliver(){
-        streamBridge.send("deliver-finish","");
+    public void PublishGoodsShippedComplete(GoodsShippedCompleteEvent event){
+        streamBridge.send("deliver-finish",event);
         log.info("出库结束: {}", "");
     }
 
