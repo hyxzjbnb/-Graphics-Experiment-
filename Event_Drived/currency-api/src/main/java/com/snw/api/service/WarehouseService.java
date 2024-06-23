@@ -111,6 +111,34 @@ public class WarehouseService {
         }
     }
 
+    public void addWarehouseCapacity(String warehouseId, int newCapacity) {
+        try {
+            File file = new File(WAREHOUSE_FILE_PATH);
+            if (!file.exists()) {
+                log.warn("Warehouse JSON file does not exist");
+                return;
+            }
+
+            ObjectNode jsonData = (ObjectNode) objectMapper.readTree(file);
+            ArrayNode warehousesArray = (ArrayNode) jsonData.get("warehouse");
+
+            for (JsonNode node : warehousesArray) {
+                if (node instanceof ObjectNode) {
+                    ObjectNode warehouse = (ObjectNode) node;
+                    if (warehouseId.equals(warehouse.get("id").asText())) {
+                        int a = warehouse.get("availableSlots").asInt();
+                        warehouse.put("availableSlots", a+newCapacity);
+                        objectMapper.writeValue(file, jsonData);  // 保存更新后的数据
+                        //log.info("Updated warehouse {} with new capacity {} and new dimensions {}", warehouseId, newCapacity);
+                        return;
+                    }
+                }
+            }
+        } catch (IOException e) {
+            log.error("Error updating warehouse capacity", e);
+        }
+    }
+
     // 获取所有仓库的信息
     public ArrayNode getAllWarehouses() {
         try {
