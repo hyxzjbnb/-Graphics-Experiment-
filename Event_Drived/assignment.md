@@ -411,27 +411,10 @@ currency-client[这个是客户，发送事件，接收系统发送的信号并�
   ![Local Image](photo/inbound/img_1.png)
 ------------------------------
 入库流程
-#### InspectionCompleted
 
-- **生产者**：检查和文档处理服务发布此事件。
-- **消费者**：仓库存储服务监听此事件，准备货物入库。
-- 给数据库里的加上documents就好了
-- 然后吧数据放到新表inventory里
-```json
-{
-  "id": "IN001",
-  "inspectionTime": "2024-06-07T10:25:00Z",
-  "documents": {
-    "invoice": "INV12345",
-    "billOfLading": "BL12345",
-    "warranty": "WT12345"
-  }
-}
-```
 
 **行为**：
-- 生产者（检查和文档处理服务）在完成货物检查后发布`InspectionCompleted`事件。
-- 消费者（仓库存储服务）接收到事件后，准备货物的入库。
+
 
 #### StorageLocationAllocated
 
@@ -482,6 +465,10 @@ currency-client[这个是客户，发送事件，接收系统发送的信号并�
 **行为**：
 - 生产者（升降机控制服务）在完成货物入库时发布`StorageCompleted`事件。
 - 消费者（库存管理服务）接收到事件后，更新库存信息并记录货物的最终存储位置。
+
+接口处理存储过程，包括分配仓库位置、分配升降机、模拟升降机移动
+
+![Local Image](photo/storage/img.png)
 -------------------------------------
 #### OrderReceived
 
@@ -621,3 +608,6 @@ Kafka是事件驱动系统的核心，用于高效传输和处理事件。以下
 
 - 这是出库的信号展示
 - ![Local Image](photo/test/img_5.png)
+
+- 这是存储的信号展示
+- ![Local Image](photo/test/img_6.png)
