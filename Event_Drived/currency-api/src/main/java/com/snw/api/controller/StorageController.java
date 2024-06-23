@@ -1,97 +1,55 @@
 package com.snw.api.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.snw.api.event.StorageCompletedEvent;
-import com.snw.api.event.StorageLocationAllocatedEvent;
-import com.snw.api.event.StorageStartedEvent;
-import com.snw.api.kafka.PostStreamer;
-import com.snw.api.service.StorageService;
-import com.snw.api.service.liftService; // 确保导入正确的包
-
+import com.snw.api.service.liftService;
+import com.snw.api.service.WarehouseService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/storage")
 public class StorageController {
 
-    private final PostStreamer postStreamer;
-    private final ObjectMapper objectMapper;
-    private final StorageService storageService;
-    private final liftService liftService; // 确保使用正确的实例名称
+    private final liftService liftService;
+    private final WarehouseService warehouseService;
 
     @Autowired
-    public StorageController(PostStreamer postStreamer, ObjectMapper objectMapper, StorageService storageService, liftService liftService) {
-        this.postStreamer = postStreamer;
-        this.objectMapper = objectMapper;
-        this.storageService = storageService;
+    public StorageController(liftService liftService, WarehouseService warehouseService) {
         this.liftService = liftService;
-    }
-
-    @PostMapping("/allocate")
-    public ObjectNode allocateStorage(@RequestBody ObjectNode allocationData) {
-        String id = allocationData.get("id").asText();
-        int capacity = 100;
-        Map<String, Integer> location = new HashMap<>();
-        location.put("x", 5);
-        location.put("y", 5);
-        location.put("z", 2);
-
-        StorageLocationAllocatedEvent event = new StorageLocationAllocatedEvent("success", id, capacity, location);
-        storageService.allocateStorageLocation(event);
-
-        ObjectNode response = objectMapper.createObjectNode();
-        response.put("status", "success");
-
-        return response;
+        this.warehouseService = warehouseService;
     }
 
     @PostMapping("/start")
-    public ObjectNode startStorage(@RequestBody ObjectNode storageData) {
-        String id = storageData.get("id").asText();
-        String startTime = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+    public ResponseEntity<String> startStorage(@RequestBody ObjectNode request) {
+        String warehouseId = request.get("warehouseId").asText();
+        String itemId = request.get("itemId").asText();
+        int totalQuantity = request.get("totalQuantity").asInt();
 
-        StorageStartedEvent event = new StorageStartedEvent(id, startTime);
-        String result = liftService.handleStorageStarted(event);
+        StringBuilder logDetails = new StringBuilder();
 
-        ObjectNode response = objectMapper.createObjectNode();
-        if ("success".equals(result)) {
-            response.put("id", id);
-            response.put("startTime", startTime);
-            response.put("status", "Storage started successfully");
-        } else {
-            response.put("id", id);
-            response.put("status", "Failed to start storage - no available lift");
+        // 分配仓库位置
+        ObjectNode storageInfo = warehouseService.findAndAllocateStorage(warehouseId, itemId);
+        if (storageInfo == null) {
+            logDetails.append("Failed to allocate storage position in warehouse ").append(warehouseId).append("\n");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(logDetails.toString());
         }
+        String position = storageInfo.get("position").asText();
+        logDetails.append("Allocated storage position ").append(position).append(" in warehouse ").append(warehouseId).append("\n");
 
-        return response;
-    }
+        // 分配升降机
+        ObjectNode lift = liftService.findAndAllocateLift(position);
+        if (lift == null) {
+            logDetails.append("Failed to allocate lift for position ").append(position).append("\n");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(logDetails.toString());
+        }
+        logDetails.append("Allocated lift with ID ").append(lift.get("id").asText()).append(" to position ").append(position).append("\n");
 
-    @PostMapping("/complete")
-    public ObjectNode completeStorage(@RequestBody ObjectNode completionData) {
-        String shipmentId = completionData.get("id").asText();
-        String warehouseId = "WH001";
-        String completionTime = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
-        Map<String, Integer> storageLocation = new HashMap<>();
-        storageLocation.put("x", 2);
-        storageLocation.put("y", 3);
-        storageLocation.put("z", 1);
+        // 模拟升降机移动
+        liftService.simulateLiftMovement(lift, position);
+        logDetails.append("Started simulating lift movement to position ").append(position).append("\n");
 
-        StorageCompletedEvent event = new StorageCompletedEvent(shipmentId, warehouseId, completionTime, storageLocation);
-        postStreamer.publishStorageCompletedEvent(event);
-
-        ObjectNode response = objectMapper.createObjectNode();
-        response.put("shipmentId", shipmentId);
-        response.put("warehouseId", warehouseId);
-        response.put("completionTime", completionTime);
-        response.set("storageLocation", objectMapper.valueToTree(storageLocation));
-
-        return response;
+        return ResponseEntity.ok(logDetails.toString());
     }
 }

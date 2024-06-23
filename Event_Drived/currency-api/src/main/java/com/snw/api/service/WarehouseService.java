@@ -1,10 +1,5 @@
 package com.snw.api.service;
 
-/**
- * @author hyxzjbnb
- * @create 2024-06-07-20:41
- */
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -22,7 +17,7 @@ import java.util.List;
 public class WarehouseService {
 
     private static final Logger log = LoggerFactory.getLogger(WarehouseService.class);
-    private static final String WAREHOUSE_FILE_PATH = "currency-api/src/main/java/com/snw/api/json/warehouse.json";  // warehouse JSON文件路径
+    private static final String WAREHOUSE_FILE_PATH = "/Users/mac/Desktop/automated-warehouse-management-system_副本/Event_Drived/currency-api/src/main/java/com/snw/api/json/warehouse.json";  // warehouse JSON文件路径
 
     private final ObjectMapper objectMapper;
 
@@ -132,6 +127,7 @@ public class WarehouseService {
             return null;
         }
     }
+
     // 删除仓库
     public void deleteWarehouse(String warehouseId) {
         try {
@@ -190,6 +186,67 @@ public class WarehouseService {
         } catch (IOException e) {
             log.error("Error finding warehouse by ID", e);
             return null;
+        }
+    }
+
+    // 计算存储位置
+    public String calculateStoragePosition(ObjectNode warehouse) {
+        ObjectNode dimensions = (ObjectNode) warehouse.get("dimensions");
+        int x = dimensions.get("x").asInt();
+        int y = dimensions.get("y").asInt();
+        int z = dimensions.get("z").asInt();
+
+        for (int i = x; i >= 0; i--) {
+            for (int j = y; j >= 0; j--) {
+                for (int k = z; k >= 0; k--) {
+                    return i + "," + j + "," + k;
+                }
+            }
+        }
+        return null;
+    }
+
+    // 查找和分配存储位置
+    public ObjectNode findAndAllocateStorage(String warehouseId, String itemId) {
+        ObjectNode warehouse = getWarehouseById(warehouseId);
+        if (warehouse != null) {
+            String position = calculateStoragePosition(warehouse);
+            if (position != null) {
+                int newAvailableSlots = warehouse.get("availableSlots").asInt() - 1;
+                warehouse.put("availableSlots", newAvailableSlots);
+                saveWarehouseData(warehouse);  // 保存更新后的数据
+                ObjectNode storageInfo = objectMapper.createObjectNode();
+                storageInfo.put("position", position);
+                storageInfo.put("warehouseId", warehouseId);
+                storageInfo.put("itemId", itemId);
+                return storageInfo;
+            }
+        }
+        return null;
+    }
+
+    // 保存仓库数据
+    private void saveWarehouseData(ObjectNode warehouse) {
+        try {
+            File file = new File(WAREHOUSE_FILE_PATH);
+            if (!file.exists()) {
+                log.warn("Warehouse JSON file does not exist");
+                return;
+            }
+
+            ObjectNode jsonData = (ObjectNode) objectMapper.readTree(file);
+            ArrayNode warehousesArray = (ArrayNode) jsonData.get("warehouse");
+
+            for (int i = 0; i < warehousesArray.size(); i++) {
+                ObjectNode node = (ObjectNode) warehousesArray.get(i);
+                if (node.get("id").asText().equals(warehouse.get("id").asText())) {
+                    warehousesArray.set(i, warehouse);
+                    break;
+                }
+            }
+            objectMapper.writeValue(file, jsonData);  // 保存更新后的数据
+        } catch (IOException e) {
+            log.error("Error saving warehouse data", e);
         }
     }
 }

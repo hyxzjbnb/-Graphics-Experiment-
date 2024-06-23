@@ -67,15 +67,10 @@ public class PostStreamer {
     }
 
     // 新增发布 StorageLocationAllocatedEvent 事件的方法
-    public void publishStorageLocationAllocatedEvent(StorageLocationAllocatedEvent event) {
-        streamBridge.send("storage-location-allocated-out-0", event);
-        log.info("Storage location allocated event sent: {}", event);
+    public void publishStorageStartedEvent(StorageStartedEvent event) {
+        streamBridge.send("storage-topic", event.toString());
     }
 
-    public void publishStorageStartedEvent(StorageStartedEvent event) {
-        streamBridge.send("storage-started-out-0", event);
-        log.info("Storage started event sent: {}", event);
-    }
     public void publishStorageCompletedEvent(StorageCompletedEvent event) {
         streamBridge.send("storage-completed-out-0", event);
         log.info("Storage completed event sent: {}", event);

@@ -4,118 +4,235 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.snw.api.event.StorageCompletedEvent;
 import com.snw.api.event.StorageStartedEvent;
-import com.snw.api.kafka.PostStreamer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-/**
- * @author hyxzjbnb
- * @create 2024-06-14-19:30
- */
 @Service
 public class liftService {
-    private static final Logger log = LoggerFactory.getLogger(OutboundService.class);
-    private static final String LIFT_FILE_PATH = "currency-api/src/main/java/com/snw/api/json/lift.json";
+
+    private static final Logger log = LoggerFactory.getLogger(liftService.class);
+    private static final String LIFT_FILE_PATH = "/Users/mac/Desktop/automated-warehouse-management-system_副本/Event_Drived/currency-api/src/main/java/com/snw/api/json/lift.json";  // 更新路径为你的实际路径
+    private static final ExecutorService executor = Executors.newCachedThreadPool();
 
     private final ObjectMapper objectMapper;
 
-    private final PostStreamer postStreamer;
-    private final VehicleService vehicleService;
-
-    @Autowired
-    public liftService(ObjectMapper objectMapper, PostStreamer postStreamer, VehicleService vehicleService) {
+    public liftService(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
-        this.postStreamer = postStreamer;
-        this.vehicleService = vehicleService;
     }
 
-
-    public String handleStorageStarted(StorageStartedEvent event) {
-        log.info("Handling StorageStartedEvent: {}", event);
-        ObjectNode allocatedLift = findAndAllocateLift(event.getId());
-        if (allocatedLift != null) {
-            log.info("Lift allocated: {}", allocatedLift);
-
-            // 获取升降机的速度并计算运输时间
-            int speed = allocatedLift.get("speed").asInt();
-            Map<String, Integer> startLocation = new HashMap<>();
-            startLocation.put("x", 0);
-            startLocation.put("y", 0);
-            startLocation.put("z", 0);
-            Map<String, Integer> endLocation = new HashMap<>();
-            endLocation.put("x", 2);
-            endLocation.put("y", 3);
-            endLocation.put("z", 1);
-
-            double distance = vehicleService.calculateDistance(startLocation, endLocation);
-            int travelTime = vehicleService.calculateTravelTime(distance, speed);
-
-            // Simulate completing storage process and publish StorageCompletedEvent
-            StorageCompletedEvent storageCompletedEvent = new StorageCompletedEvent(
-                    event.getId(), allocatedLift.get("location").asText(), "2024-06-07T10:45:00Z", endLocation);
-            postStreamer.publishStorageCompletedEvent(storageCompletedEvent);
-
-            // 释放升降机
-            updateLiftStatus(allocatedLift.get("id").asText(), "idle");
-
-            return "success";
-        } else {
-            log.warn("No available lift for storage started event: {}", event);
-            return "failed";
-        }
-    }
-
-
-    // 检查和分配空闲的车辆
-    public ObjectNode findAndAllocateLift(String warehouseId) {
+    public ArrayNode getAllLifts() {
         try {
             File file = new File(LIFT_FILE_PATH);
             if (!file.exists()) {
-                log.warn("Vehicles JSON file does not exist");
-                return null;
+                log.warn("Lift JSON file does not exist");
+                return objectMapper.createArrayNode();
+            }
+            return (ArrayNode) objectMapper.readTree(file).get("lift");
+        } catch (IOException e) {
+            log.error("Error reading lifts", e);
+            return objectMapper.createArrayNode();
+        }
+    }
+
+    public void addLift(ObjectNode newLift) {
+        try {
+            File file = new File(LIFT_FILE_PATH);
+            ObjectNode jsonData;
+
+            if (!file.exists()) {
+                jsonData = objectMapper.createObjectNode();
+                jsonData.set("lift", objectMapper.createArrayNode());
+                log.warn("Lift JSON file does not exist, creating new one.");
+            } else {
+                jsonData = (ObjectNode) objectMapper.readTree(file);
+            }
+
+            ArrayNode liftsArray = (ArrayNode) jsonData.get("lift");
+            liftsArray.add(newLift);
+            objectMapper.writeValue(file, jsonData);  // 保存更新后的数据
+            log.info("Added new lift: {}", newLift);
+        } catch (IOException e) {
+            log.error("Error adding lift", e);
+        }
+    }
+
+    public void storeLift(String position) {
+        log.info("Storing lift at position: " + position);
+        try {
+            File file = new File(LIFT_FILE_PATH);
+            ObjectNode jsonData;
+
+            if (!file.exists()) {
+                jsonData = objectMapper.createObjectNode();
+                jsonData.set("lift", objectMapper.createArrayNode());
+                log.warn("Lift JSON file does not exist, creating new one.");
+            } else {
+                jsonData = (ObjectNode) objectMapper.readTree(file);
+            }
+
+            ArrayNode liftsArray = (ArrayNode) jsonData.get("lift");
+
+            ObjectNode newRecord = objectMapper.createObjectNode();
+            newRecord.put("id", "LIFT" + System.currentTimeMillis());
+            newRecord.put("position", position);
+            newRecord.put("status", "loading");
+            newRecord.put("creationTime", DateTimeFormatter.ISO_INSTANT.format(Instant.now()));
+
+            liftsArray.add(newRecord);
+            objectMapper.writeValue(file, jsonData);  // 保存更新后的数据
+            log.info("Created lift record at position {}", position);
+        } catch (IOException e) {
+            log.error("Error creating lift record", e);
+        }
+    }
+
+    public void deleteLift(String liftId) {
+        try {
+            File file = new File(LIFT_FILE_PATH);
+            if (!file.exists()) {
+                log.warn("Lift JSON file does not exist");
+                return;
             }
 
             ObjectNode jsonData = (ObjectNode) objectMapper.readTree(file);
-            ArrayNode vehiclesArray = (ArrayNode) jsonData.get("lift");
-            List<ObjectNode> availablelift = new ArrayList<>();
+            ArrayNode liftsArray = (ArrayNode) jsonData.get("lift");
 
-            // 遍历ArrayNode来获取所有车辆
-            for (JsonNode node : vehiclesArray) {
+            for (int i = 0; i < liftsArray.size(); i++) {
+                JsonNode node = liftsArray.get(i);
                 if (node instanceof ObjectNode) {
-                    ObjectNode lift = (ObjectNode) node;
-                    if ("idle".equals(lift.get("status").asText())) {
-                        if(warehouseId.equals(lift.get("location").asText())){
-                            availablelift.add(lift);
-                        }
+                    ObjectNode record = (ObjectNode) node;
+                    if (liftId.equals(record.get("id").asText())) {
+                        liftsArray.remove(i);
+                        objectMapper.writeValue(file, jsonData);  // 保存更新后的数据
+                        log.info("Deleted lift with ID {}", liftId);
+                        return;
                     }
                 }
             }
 
-            if (!availablelift.isEmpty()) {
-                ObjectNode selectedVehicle = availablelift.get(0);  // 选择第一个空闲的车辆
-                selectedVehicle.put("status", "in_use");  // 更新车辆状态为“使用中”
-                objectMapper.writeValue(file, jsonData);  // 保存更新后的数据
-                return selectedVehicle;
-            }
-
+            log.warn("Lift with ID {} not found", liftId);
         } catch (IOException e) {
-            log.error("Error finding and allocating vehicle", e);
+            log.error("Error deleting lift", e);
         }
-        return null;
     }
 
-    // 根据ID查找指定的lift信息
+    public ObjectNode updateLiftStatusToDown(String liftId) {
+        try {
+            File file = new File(LIFT_FILE_PATH);
+            if (!file.exists()) {
+                log.warn("Lift JSON file does not exist");
+                return null;
+            }
+
+            ObjectNode jsonData = (ObjectNode) objectMapper.readTree(file);
+            ArrayNode liftsArray = (ArrayNode) jsonData.get("lift");
+
+            for (JsonNode node : liftsArray) {
+                if (node instanceof ObjectNode) {
+                    ObjectNode record = (ObjectNode) node;
+                    if (liftId.equals(record.get("id").asText())) {
+                        record.put("status", "down");  // 更新状态为 "down"
+                        objectMapper.writeValue(file, jsonData);  // 保存更新后的数据
+                        log.info("Updated lift record with ID {} to status 'down'", liftId);
+                        return record;
+                    }
+                }
+            }
+
+            log.warn("Lift record with ID {} not found", liftId);
+            return null;
+        } catch (IOException e) {
+            log.error("Error updating lift status to 'down'", e);
+            return null;
+        }
+    }
+
+    // 新增的 handleStorageStarted 方法
+    public void handleStorageStarted(StorageStartedEvent event) {
+        log.info("Handling storage started event: {}", event);
+
+        // 处理存储开始事件的逻辑
+        storeLift(event.getPosition());
+    }
+
+    // 新增的 findAndAllocateLift 方法
+    public ObjectNode findAndAllocateLift(String position) {
+        try {
+            File file = new File(LIFT_FILE_PATH);
+            if (!file.exists()) {
+                log.warn("Lift JSON file does not exist");
+                return null;
+            }
+
+            ObjectNode jsonData = (ObjectNode) objectMapper.readTree(file);
+            ArrayNode liftsArray = (ArrayNode) jsonData.get("lift");
+
+            if (liftsArray == null) {
+                log.warn("No lifts found in the JSON file");
+                return null;
+            }
+
+            for (JsonNode node : liftsArray) {
+                if (node instanceof ObjectNode) {
+                    ObjectNode lift = (ObjectNode) node;
+                    if ("idle".equals(lift.get("status").asText())) {
+                        lift.put("status", "allocated");
+                        lift.put("position", position);
+                        objectMapper.writeValue(file, jsonData);  // 保存更新后的数据
+                        log.info("Allocated lift with ID {} to position {}", lift.get("id").asText(), position);
+                        return lift;
+                    }
+                }
+            }
+
+            log.warn("No idle lift found to allocate");
+            return null;
+        } catch (IOException e) {
+            log.error("Error allocating lift", e);
+            return null;
+        }
+    }
+
+    // 新增的 updateLiftStatus 方法
+    public void updateLiftStatus(String liftId, String status) {
+        try {
+            File file = new File(LIFT_FILE_PATH);
+            if (!file.exists()) {
+                log.warn("Lift JSON file does not exist");
+                return;
+            }
+
+            ObjectNode jsonData = (ObjectNode) objectMapper.readTree(file);
+            ArrayNode liftsArray = (ArrayNode) jsonData.get("lift");
+
+            for (JsonNode node : liftsArray) {
+                if (node instanceof ObjectNode) {
+                    ObjectNode lift = (ObjectNode) node;
+                    if (liftId.equals(lift.get("id").asText())) {
+                        lift.put("status", status);
+                        objectMapper.writeValue(file, jsonData);  // 保存更新后的数据
+                        log.info("Updated lift status with ID {} to {}", liftId, status);
+                        return;
+                    }
+                }
+            }
+
+            log.warn("Lift with ID {} not found", liftId);
+        } catch (IOException e) {
+            log.error("Error updating lift status", e);
+        }
+    }
+
+    // 新增的 getLiftById 方法
     public ObjectNode getLiftById(String liftId) {
         try {
             File file = new File(LIFT_FILE_PATH);
@@ -131,6 +248,7 @@ public class liftService {
                 if (node instanceof ObjectNode) {
                     ObjectNode lift = (ObjectNode) node;
                     if (liftId.equals(lift.get("id").asText())) {
+                        log.info("Found lift with ID {}", liftId);
                         return lift;
                     }
                 }
@@ -139,107 +257,49 @@ public class liftService {
             log.warn("Lift with ID {} not found", liftId);
             return null;
         } catch (IOException e) {
-            log.error("Error finding lift by ID", e);
+            log.error("Error getting lift by ID", e);
             return null;
         }
     }
 
-    // 更新指定ID的lift的状态
-    public ObjectNode updateLiftStatus(String liftId, String newStatus) {
-        try {
-            File file = new File(LIFT_FILE_PATH);
-            if (!file.exists()) {
-                log.warn("Lift JSON file does not exist");
-                return null;
-            }
+    // 计算欧几里得距离
+    private double calculateEuclideanDistance(String position1, String position2) {
+        String[] pos1 = position1.split(",");
+        String[] pos2 = position2.split(",");
+        int x1 = Integer.parseInt(pos1[0]);
+        int y1 = Integer.parseInt(pos1[1]);
+        int z1 = Integer.parseInt(pos1[2]);
+        int x2 = Integer.parseInt(pos2[0]);
+        int y2 = Integer.parseInt(pos2[1]);
+        int z2 = Integer.parseInt(pos2[2]);
 
-            ObjectNode jsonData = (ObjectNode) objectMapper.readTree(file);
-            ArrayNode liftsArray = (ArrayNode) jsonData.get("lift");
-
-            for (JsonNode node : liftsArray) {
-                if (node instanceof ObjectNode) {
-                    ObjectNode lift = (ObjectNode) node;
-                    if (liftId.equals(lift.get("id").asText())) {
-                        lift.put("status", newStatus);  // 更新lift的状态
-                        objectMapper.writeValue(file, jsonData);  // 保存更新后的数据
-                        log.info("Updated lift with ID {} to new status {}", liftId, newStatus);
-                        return lift;
-                    }
-                }
-            }
-
-            log.warn("Lift with ID {} not found", liftId);
-            return null;
-        } catch (IOException e) {
-            log.error("Error updating lift status", e);
-            return null;
-        }
+        return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2) + Math.pow(z2 - z1, 2));
     }
 
-    // 获取所有车辆信息
-    public ArrayNode getAlllifts() {
-        try {
-            File file = new File(LIFT_FILE_PATH);
-            if (!file.exists()) {
-                log.warn("Vehicles JSON file does not exist");
-                return null;
+    // 模拟升降机移动
+    public void simulateLiftMovement(ObjectNode lift, String position) {
+        executor.submit(() -> {
+            try {
+                String currentPosition = lift.get("location").asText();
+                double distance = calculateEuclideanDistance(currentPosition, position);
+                int speed = lift.get("speed").asInt();
+                long travelTime = (long) (distance / speed * 2 * 1000); // 时间单位为毫秒
+
+                // 更新升降机状态为 busy
+                updateLiftStatus(lift.get("id").asText(), "busy");
+
+                // 等待升降机完成任务
+                Thread.sleep(travelTime);
+
+                // 任务完成，更新升降机位置和状态
+                lift.put("location", position);
+                updateLiftStatus(lift.get("id").asText(), "idle");
+
+                log.info("Lift with ID {} moved to position {} and is now idle", lift.get("id").asText(), position);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                log.error("Lift movement simulation interrupted", e);
             }
-
-            ObjectNode jsonData = (ObjectNode) objectMapper.readTree(file);
-            return (ArrayNode) jsonData.get("lift");
-        } catch (IOException e) {
-            log.error("Error reading vehicles data", e);
-        }
-        return null;
-    }
-
-    // 增加新车辆
-    public void addLift(ObjectNode newVehicle) {
-        try {
-            File file = new File(LIFT_FILE_PATH);
-            if (!file.exists()) {
-                log.warn("Vehicles JSON file does not exist");
-                return;
-            }
-
-            ObjectNode jsonData = (ObjectNode) objectMapper.readTree(file);
-            ArrayNode vehiclesArray = (ArrayNode) jsonData.get("lift");
-
-            vehiclesArray.add(newVehicle);
-            objectMapper.writeValue(file, jsonData);  // 保存更新后的数据
-            log.info("Added new vehicle: {}", newVehicle);
-        } catch (IOException e) {
-            log.error("Error adding vehicle", e);
-        }
-    }
-
-    // 删除车辆
-    public void deleteLift(String vehicleId) {
-        try {
-            File file = new File(LIFT_FILE_PATH);
-            if (!file.exists()) {
-                log.warn("Vehicles JSON file does not exist");
-                return;
-            }
-
-            ObjectNode jsonData = (ObjectNode) objectMapper.readTree(file);
-            ArrayNode vehiclesArray = (ArrayNode) jsonData.get("lift");
-
-            for (int i = 0; i < vehiclesArray.size(); i++) {
-                JsonNode node = vehiclesArray.get(i);
-                if (node instanceof ObjectNode) {
-                    ObjectNode vehicle = (ObjectNode) node;
-                    if (vehicleId.equals(vehicle.get("id").asText())) {
-                        vehiclesArray.remove(i);
-                        objectMapper.writeValue(file, jsonData);  // 保存更新后的数据
-                        log.info("Deleted vehicle with ID: {}", vehicleId);
-                        return;
-                    }
-                }
-            }
-            log.warn("Vehicle with ID: {} not found", vehicleId);
-        } catch (IOException e) {
-            log.error("Error deleting vehicle", e);
-        }
+        });
     }
 }
